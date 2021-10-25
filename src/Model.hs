@@ -22,19 +22,19 @@ data GameState = GameState {
 
 data Player = Player {
   lives     :: Int, 
-  position  :: Position,
-  direction :: Direction,
+  playerPos  :: Position,
+  playerDir :: Direction,
   time      :: Float 
 }
 
 data Bullet = Bullet {
-  position  :: Position,
-  direction :: Direction 
+  bulletPos  :: Position,
+  bulletDir :: Direction 
 }
 
 data Asteroid = Asteroid {
-  position  :: Position,
-  direction :: Direction,
+  asteriodPos  :: Position,
+  asteriodDir :: Direction,
   size      :: Int,
   speed     :: Int 
 }
