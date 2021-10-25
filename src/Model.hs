@@ -1,16 +1,14 @@
 -- | This module contains the data types
 --   which represent the state of the game
 module Model where
+import System.Random
 
 data InfoToShow = ShowNothing
                 | ShowANumber Int
                 | ShowAChar   Char
 
-nO_SECS_BETWEEN_CYCLES :: Float
-nO_SECS_BETWEEN_CYCLES = 5
-
 type Direction = (Float, Float)
-type Position = (Float, Float)
+type Position  = (Float, Float)
 
 data GameState = GameState {
   currentState :: State,
@@ -21,22 +19,26 @@ data GameState = GameState {
 }
 
 data Player = Player {
-  lives     :: Int, 
+  lives      :: Int, 
   playerPos  :: Position,
-  playerDir :: Direction,
-  time      :: Float 
+  playerDir  :: Direction,
+  time       :: Float 
 }
 
 data Bullet = Bullet {
   bulletPos  :: Position,
-  bulletDir :: Direction 
+  bulletDir  :: Direction 
 }
 
+{-
+  Size are in the range of [1 .. 4]
+  Speed is in the range of [0.5 .. 2.0]
+-}
 data Asteroid = Asteroid {
   asteriodPos  :: Position,
-  asteriodDir :: Direction,
-  size      :: Int,
-  speed     :: Int 
+  asteriodDir  :: Direction,
+  size         :: Int,
+  speed        :: Int 
 }
 
 data ScoreEntry = ScoreEntry {
@@ -54,5 +56,11 @@ data State = Main
 
 data GameMode = Coop | SinglePlayer
 
+initialPlayer :: Player
+initialPlayer = Player 5 (0,0) (0,0) 0.0
+
+initialAsteroid :: Asteroid
+initialAsteroid = Asteroid (0,0) (0,0) 1 1
+
 initialState :: GameState
-initialState = GameState ShowNothing 0
+initialState = GameState Main initialPlayer initialPlayer [] []
