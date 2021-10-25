@@ -9,48 +9,50 @@ data InfoToShow = ShowNothing
 nO_SECS_BETWEEN_CYCLES :: Float
 nO_SECS_BETWEEN_CYCLES = 5
 
+type Direction = (Float, Float)
+type Position = (Float, Float)
+
 data GameState = GameState {
   currentState :: State,
-  player1 :: Player,
-  player2 :: Player,
-  asteroids :: [Asteroid],
-  bullets :: [Bullet] 
+  player1      :: Player,
+  player2      :: Player,
+  asteroids    :: [Asteroid],
+  bullets      :: [Bullet] 
 }
 
-Data Player = Player{
-  lives :: Int,
-  position :: (Float, Float),
-  direction :: (Float, Float),
-  time :: Float 
+data Player = Player {
+  lives     :: Int, 
+  position  :: Position,
+  direction :: Direction,
+  time      :: Float 
 }
 
-Data Bullet = Bullet {
-  position :: (Float, Float ),
-  direction :: (Float, Float) 
+data Bullet = Bullet {
+  position  :: Position,
+  direction :: Direction 
 }
 
-Data Asteroid = Asteroid {
-  position :: (Float, Float),
-  direction :: (Float, Float),
-  size :: Int,
-  speed :: Int 
+data Asteroid = Asteroid {
+  position  :: Position,
+  direction :: Direction,
+  size      :: Int,
+  speed     :: Int 
 }
 
-Data ScoreEntry = ScoreEntry {
-  name :: String,
+data ScoreEntry = ScoreEntry {
+  name  :: String,
   score :: Int,
-  mode :: GameMode 
+  mode  :: GameMode 
 }
 
-Data State = Main
+data State = Main
   | Playing
   | GameOver
   | Pause
   | Leaderboard
   | Choose
 
-
-Data GameMode = Co-Op | SinglePlayer
+data GameMode = Coop | SinglePlayer
 
 initialState :: GameState
 initialState = GameState ShowNothing 0
