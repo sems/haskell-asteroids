@@ -23,3 +23,4 @@ input e gstate = return (inputKey e gstate)
 inputKey :: Event -> GameState -> GameState
 inputKey (EventKey (Char c) _ _ _) gstate = gstate { infoToShow = ShowAChar c }
 inputKey _ gstate = gstate
+

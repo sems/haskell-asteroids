@@ -9,6 +9,10 @@ data InfoToShow = ShowNothing
 
 type Direction = (Float, Float)
 type Position  = (Float, Float)
+type Lives     = Int
+type Size      = Int
+type Speed     = Float 
+type Score     = Int
 
 data GameState = GameState {
   currentState :: State,
@@ -19,7 +23,7 @@ data GameState = GameState {
 }
 
 data Player = Player {
-  lives      :: Int, 
+  lives      :: Lives, 
   playerPos  :: Position,
   playerDir  :: Direction,
   time       :: Float 
@@ -37,13 +41,13 @@ data Bullet = Bullet {
 data Asteroid = Asteroid {
   asteriodPos  :: Position,
   asteriodDir  :: Direction,
-  size         :: Int,
-  speed        :: Int 
+  size         :: Size,
+  speed        :: Speed 
 }
 
 data ScoreEntry = ScoreEntry {
   name  :: String,
-  score :: Int,
+  score :: Score,
   mode  :: GameMode 
 }
 
