@@ -59,12 +59,10 @@ data State = Main
   | Choose
 
 data GameMode = Coop | SinglePlayer
-
-initialPlayer :: Player
-initialPlayer = Player 5 (0,0) (0,0) 0.0
+  deriving Show
 
 initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
-initialState = GameState Main initialPlayer initialPlayer [] []
+initialState = GameState Main (Player 5 (-100 , 0) (0,0) 0) (Player 5 (100,0) (0,0) 0) [] []

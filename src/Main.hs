@@ -3,11 +3,12 @@ module Main where
 import Controller
 import Model
 import View
+import Constants
 
 import Graphics.Gloss.Interface.IO.Game
 
 main :: IO ()
-main = playIO (InWindow "Counter" (1000, 600) (0, 0)) 
+main = playIO (InWindow "Counter" (screenWidth, screenHigth) (0, 0)) 
   black            -- Background color
   10               -- Frames per second
   initialState     -- Initial state
