@@ -35,8 +35,22 @@ drawPlayers (GameState _ (Player lives1 pos1 _ _) (Player lives2 pos2 _ _) _ _ _
   where drawPlayer _ _ 0 = blank
         drawPlayer (x,y) col _ = translate x y $ color col $ polygon [(0,0),(10,30),(20,0)]
 
+drawAsteroids :: GameState -> [Picture]
+drawAsteroids (GameState _ _ _ [] _ _) = []
+drawAsteroids (GameState _ _ _ astr@(a:as) _ ks) = getAsteroids astr
+  where
+    drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle (realToFrac (siz * 5))
+    getAsteroids [] = []
+    getAsteroids (a:as) = drawAsteroid a : getAsteroids as
 
 
-
-
-
+{-
+  data GameState = GameState {
+    currentState :: State,
+    player1      :: Player,
+    player2      :: Player,
+    asteroids    :: [Asteroid],
+    bullets      :: [Bullet],
+    keys         :: S.Set Key
+  }
+-}
