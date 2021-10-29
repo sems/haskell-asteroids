@@ -8,7 +8,7 @@ import Constants
 import Graphics.Gloss.Interface.IO.Game
 
 main :: IO ()
-main = playIO (InWindow "Counter" (screenWidth, screenHeigth) (0, 0)) 
+main = playIO (InWindow "Asteroids" (screenWidth, screenHeigth) (0, 0)) 
   black            -- Background color
   60               -- Frames per second
   initialState     -- Initial state

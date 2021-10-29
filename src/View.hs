@@ -43,15 +43,3 @@ drawAsteroids (GameState _ _ _ astr _ _) = getAsteroids astr
     drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle (realToFrac (siz * 5))
     getAsteroids [] = []
     getAsteroids (a:as) = drawAsteroid a : getAsteroids as
-
-
-{-
-  data GameState = GameState {
-    currentState :: State,
-    player1      :: Player,
-    player2      :: Player,
-    asteroids    :: [Asteroid],
-    bullets      :: [Bullet],
-    keys         :: S.Set Key
-  }
--}

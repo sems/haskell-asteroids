@@ -70,3 +70,6 @@ newAsteroid = do
   astrSize <- getStdRandom (randomR (50, 200))
   speed <- getStdRandom (randomR (50, 200))
   return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
+
+pureAsteroid :: Asteroid
+pureAsteroid = Asteroid (realToFrac screenWidth/2, realToFrac screenHeigth/2) (0,0) 2 1
