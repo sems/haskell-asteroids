@@ -8,6 +8,8 @@ import System.Random
 
 import Data.Set
 import qualified Data.Set as S
+import Constants (screenWidth, screenHeigth)
+import Model (Asteroid(Asteroid))
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
@@ -40,7 +42,7 @@ stateFlow _ gstate = gstate
 
 
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}} 
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
 handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
 handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
 handleTime _ gstate = gstate
@@ -53,3 +55,18 @@ handleInput :: Event -> GameState -> GameState
 handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gstate)}
 handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate)}
 handleInput _ world = world -- Ignore non-keypresses for simplicity
+
+spawnAsteroid :: GameState -> IO GameState
+spawnAsteroid gstate@(GameState _ _ _ astr _ _) = do
+  newAstr <- newAsteroid
+  return $ gstate{asteroids = astr ++ [newAstr] }
+
+newAsteroid :: IO Asteroid
+newAsteroid = do
+  xPos <- getStdRandom (randomR (screenWidth `div` 2 , screenWidth))
+  yPos <- getStdRandom (randomR (0, screenHeigth))
+  xDir <- getStdRandom (randomR (0, screenWidth))
+  yDir <- getStdRandom (randomR (0, screenHeigth))
+  astrSize <- getStdRandom (randomR (50, 200))
+  speed <- getStdRandom (randomR (50, 200))
+  return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)

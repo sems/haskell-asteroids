@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 -- | This module defines how to turn
 --   the game state into a picture
 module View where
@@ -11,7 +12,7 @@ view = return . viewPure
 viewPure :: GameState -> Picture
 viewPure gstate = case currentState gstate of -- temp indications for states
   Main        -> color green (text "Main")
-  Playing     -> pictures $ drawPlaying gstate
+  Playing     -> pictures (drawPlaying gstate ++ drawAsteroids gstate)
   GameOver    -> pictures $ drawGameOver gstate
   Pause       -> color green (text "Pause")
   Leaderboard -> color green (text "Leaderboard")
@@ -36,8 +37,8 @@ drawPlayers (GameState _ (Player lives1 pos1 _ _) (Player lives2 pos2 _ _) _ _ _
         drawPlayer (x,y) col _ = translate x y $ color col $ polygon [(0,0),(10,30),(20,0)]
 
 drawAsteroids :: GameState -> [Picture]
-drawAsteroids (GameState _ _ _ [] _ _) = []
-drawAsteroids (GameState _ _ _ astr@(a:as) _ ks) = getAsteroids astr
+drawAsteroids (GameState _ _ _ [] _ _) = [blank]
+drawAsteroids (GameState _ _ _ astr _ _) = getAsteroids astr
   where
     drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle (realToFrac (siz * 5))
     getAsteroids [] = []
