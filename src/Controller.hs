@@ -10,15 +10,16 @@ import Data.Set
 import qualified Data.Set as S
 import Constants (screenWidth, screenHeigth)
 import Model (Asteroid(Asteroid))
+import Text.Printf (printf)
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing _ _ _ _ _) = return $ checkDeath $ handleTime secs gstate
+step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleTime secs gstate
 step _ gstate = return gstate
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
-input e gstate = return $ testEvent e $ stateFlow e gstate
+input e gstate = return $ testEvent e $ stateFlow e gstate 
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
@@ -40,7 +41,6 @@ stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = in
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState
 stateFlow _ gstate = gstate
 
-
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
 handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
 handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
@@ -56,10 +56,15 @@ handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gsta
 handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate)}
 handleInput _ world = world -- Ignore non-keypresses for simplicity
 
+getElapsedTime :: GameState -> Int 
+getElapsedTime gstate@(GameState Playing p1@(Player _ _ _ t1) p2@(Player _ _ _ t2) _ _ _) = max (round t1) $ round t2
+getElapsedTime gstate = 0
+
 spawnAsteroid :: GameState -> IO GameState
 spawnAsteroid gstate@(GameState _ _ _ astr _ _) = do
+  let time = getElapsedTime gstate
   newAstr <- newAsteroid
-  return $ gstate{asteroids = astr ++ [newAstr] }
+  if time `mod` 5 == 0 then return $ gstate{asteroids = astr ++ [newAstr] } else return gstate
 
 newAsteroid :: IO Asteroid
 newAsteroid = do
@@ -67,7 +72,7 @@ newAsteroid = do
   yPos <- getStdRandom (randomR (0, screenHeigth))
   xDir <- getStdRandom (randomR (0, screenWidth))
   yDir <- getStdRandom (randomR (0, screenHeigth))
-  astrSize <- getStdRandom (randomR (50, 200))
+  astrSize <- getStdRandom (randomR (50, 1000))
   speed <- getStdRandom (randomR (50, 200))
   return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
 
