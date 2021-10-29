@@ -1,15 +1,23 @@
 module Controller where
 
 import Model
+    ( initialState,
+      Asteroid(Asteroid),
+      GameState(GameState, asteroids, keys, currentState, player1, player2),
+      Player(Player, playerPos, time, lives),
+      State(GameOver, Leaderboard, Pause, Choose, Main, Playing) )
 
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
+    ( Key(SpecialKey, Char),
+      KeyState(Up, Down),
+      SpecialKey(KeyEsc),
+      Event(EventKey) )
 import System.Random
 
 import Data.Set
 import qualified Data.Set as S
 import Constants (screenWidth, screenHeigth)
-import Model (Asteroid(Asteroid), GameState (GameState))
 import Text.Printf (printf)
 
 -- | Handle one iteration of the game
@@ -40,7 +48,10 @@ stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _) =
 stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState{currentState = Leaderboard}
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState
 -- movement
-stateFlow (EventKey (Char 'w') _ _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 UpDir gstate
+stateFlow (EventKey (Char 'w') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 UpDir     gstate
+stateFlow (EventKey (Char 'a') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 LeftDir   gstate
+stateFlow (EventKey (Char 's') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 DownDir   gstate
+stateFlow (EventKey (Char 'd') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 RightDir  gstate
 stateFlow _ gstate = gstate
 
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
@@ -87,7 +98,7 @@ movePlayer :: Player -> MoveDirection -> GameState -> GameState
 movePlayer p@(Player liv post dir oldTime) d gstate = gstate{player1 = movePlayer' d p} 
 
 movePlayer' :: MoveDirection -> Player -> Player 
-movePlayer' UpDir p@(Player _ (x,y) _ _) = p{playerPos = (x,y+1)}
-movePlayer' DownDir p@(Player _ (x,y) _ _) = p{playerPos = (x,y-1)}
-movePlayer' LeftDir p@(Player _ (x,y) _ _) = p{playerPos = (x-1,y)}
-movePlayer' RightDir p@(Player _ (x,y) _ _) = p{playerPos = (x+1,y)}
+movePlayer' UpDir p@(Player _ (x,y) _ _) = p{playerPos = (x,y+10)}
+movePlayer' DownDir p@(Player _ (x,y) _ _) = p{playerPos = (x,y-10)}
+movePlayer' LeftDir p@(Player _ (x,y) _ _) = p{playerPos = (x-10,y)}
+movePlayer' RightDir p@(Player _ (x,y) _ _) = p{playerPos = (x+10,y)}
