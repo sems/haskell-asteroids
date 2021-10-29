@@ -1,7 +1,7 @@
-module Constants where 
+module Constants where
 
-screenHigth :: Int
-screenHigth = 600
+screenHeigth :: Int
+screenHeigth = 600
 
 screenWidth :: Int
 screenWidth = 1000
