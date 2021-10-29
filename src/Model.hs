@@ -2,6 +2,9 @@
 --   which represent the state of the game
 module Model where
 import System.Random
+import Data.Set
+import qualified Data.Set as S
+import Graphics.Gloss.Interface.IO.Interact (Key)
 
 data InfoToShow = ShowNothing
                 | ShowANumber Int
@@ -19,7 +22,8 @@ data GameState = GameState {
   player1      :: Player,
   player2      :: Player,
   asteroids    :: [Asteroid],
-  bullets      :: [Bullet] 
+  bullets      :: [Bullet],
+  keys         :: S.Set Key
 }
 
 data Player = Player {
@@ -65,4 +69,4 @@ initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
-initialState = GameState Main (Player 5 (-100 , 0) (0,0) 0) (Player 5 (100,0) (0,0) 0) [] []
+initialState = GameState Main (Player 5 (-100 , 0) (0,0) 0) (Player 5 (100,0) (0,0) 0) [] [] S.empty 

@@ -4,3 +4,4 @@ dist
 .vs/*
 src/*.o
 src/*.hi
+src/*.exe
