@@ -5,7 +5,7 @@ import Model
       Asteroid(Asteroid),
       GameState(GameState, asteroids, keys, currentState, player1, player2),
       Player(Player, playerPos, time, lives),
-      State(GameOver, Leaderboard, Pause, Choose, Main, Playing) )
+      State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos )
 
 import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
@@ -24,7 +24,7 @@ import System.Exit ()
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleTime secs $ movePlayer secs gstate
+step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
 step _ gstate = return gstate
 
 -- | Handle user input
@@ -114,3 +114,12 @@ movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
 movePlayer' DownDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y-pS*eTime)}
 movePlayer' LeftDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x-pS*eTime,y)}
 movePlayer' RightDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x+pS*eTime,y)}
+
+moveAsteroids :: Float -> GameState -> GameState
+moveAsteroids secs gstate = gstate { asteroids = asteroids' }
+  where 
+    asteroids' = map (moveAsteroid' secs) $ asteroids gstate
+
+moveAsteroid' :: Float -> Asteroid -> Asteroid
+moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos - speed, yPos)}
+  where speed = secs * (10 * (sp / 100)) 
