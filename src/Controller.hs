@@ -11,7 +11,7 @@ import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
     ( Key(SpecialKey, Char),
       KeyState(Up, Down),
-      SpecialKey(KeyEsc),
+      SpecialKey(KeyEsc, KeyDown, KeyLeft, KeyRight, KeyUp),
       Event(EventKey) )
 import System.Random
 
@@ -93,14 +93,18 @@ data MoveDirection = UpDir | DownDir | LeftDir | RightDir
 
 -- movement
 movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
-movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{player1 = movePlayer' UpDir secs (player1 gstate)}
-                       | member (Char 'a') (keys gstate) = gstate{player1 = movePlayer' LeftDir secs (player1 gstate)}
-                       | member (Char 's') (keys gstate) = gstate{player1 = movePlayer' DownDir secs (player1 gstate)}
-                       | member (Char 'd') (keys gstate) = gstate{player1 = movePlayer' RightDir secs (player1 gstate)}
+movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{ player1 = movePlayer' UpDir secs (player1 gstate) }
+                       | member (Char 's') (keys gstate) = gstate{ player1 = movePlayer' DownDir secs (player1 gstate) }
+                       | member (Char 'a') (keys gstate) = gstate{ player1 = movePlayer' LeftDir secs (player1 gstate) }
+                       | member (Char 'd') (keys gstate) = gstate{ player1 = movePlayer' RightDir secs (player1 gstate) }
+                       | member (SpecialKey KeyUp)     (keys gstate) = gstate{ player2 = movePlayer' UpDir secs (player2 gstate) }
+                       | member (SpecialKey KeyDown)   (keys gstate) = gstate{ player2 = movePlayer' DownDir secs (player2 gstate) }
+                       | member (SpecialKey KeyLeft)   (keys gstate) = gstate{ player2 = movePlayer' LeftDir secs (player2 gstate) }
+                       | member (SpecialKey KeyRight)  (keys gstate) = gstate{ player2 = movePlayer' RightDir secs (player2 gstate) }
                        | otherwise = gstate
 
 pS:: Float --playerspeed -- teporarly here (will be moved to constants and(probably) remaned later)
-pS = 30
+pS = 50
 
 movePlayer' :: MoveDirection -> Float -> Player -> Player 
 movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
