@@ -108,6 +108,8 @@ movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{ player1 = mov
 
 pS:: Float --playerspeed -- teporarly here (will be moved to constants and(probably) remaned later)
 pS = 50
+aS :: Float 
+aS = 500
 
 movePlayer' :: MoveDirection -> Float -> Player -> Player
 movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
@@ -118,8 +120,9 @@ movePlayer' RightDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x+pS*eTime,y)
 moveAsteroids :: Float -> GameState -> GameState
 moveAsteroids secs gstate = gstate { asteroids = asteroids' }
   where 
+    asteroids':: [Asteroid]
     asteroids' = map (moveAsteroid' secs) $ asteroids gstate
 
 moveAsteroid' :: Float -> Asteroid -> Asteroid
 moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos - speed, yPos)}
-  where speed = secs * (10 * (sp / 100)) 
+  where speed = (secs * aS) * (10 * (sp / 100)) 
