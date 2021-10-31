@@ -7,7 +7,7 @@ import Model
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing) )
 
-import Graphics.Gloss
+import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
     ( Key(SpecialKey, Char),
       KeyState(Up, Down),
@@ -15,12 +15,12 @@ import Graphics.Gloss.Interface.IO.Game
       Event(EventKey) )
 import System.Random ( getStdRandom, Random(randomR) )
 
-import Data.Set
+import Data.Set ( member )
 import qualified Data.Set as S
 import Constants (screenWidth, screenHeigth)
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
-import System.Exit
+import System.Exit ()
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
