@@ -13,12 +13,14 @@ import Graphics.Gloss.Interface.IO.Game
       KeyState(Up, Down),
       SpecialKey(KeyEsc, KeyDown, KeyLeft, KeyRight, KeyUp),
       Event(EventKey) )
-import System.Random
+import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set
 import qualified Data.Set as S
 import Constants (screenWidth, screenHeigth)
 import Text.Printf (printf)
+import Graphics.Gloss.Interface.Environment (getScreenSize)
+import System.Exit
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
@@ -65,7 +67,7 @@ handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gsta
 handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate)}
 handleInput _ world = world -- Ignore non-keypresses for simplicity
 
-gameTime :: GameState -> Int 
+gameTime :: GameState -> Int
 gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _) = round time
 gameTime (GameState Playing (Player _ _ _ time) _ _ _ _) = round time
 gameTime _ = 0
@@ -78,10 +80,11 @@ spawnAsteroid gstate@(GameState _ _ _ astr _ _) = do
 
 newAsteroid :: IO Asteroid
 newAsteroid = do
-  xPos <- getStdRandom (randomR (screenWidth `div` 2 , screenWidth))
-  yPos <- getStdRandom (randomR (0, screenHeigth))
-  xDir <- getStdRandom (randomR (0, screenWidth))
-  yDir <- getStdRandom (randomR (0, screenHeigth))
+  (heightY, widthX) <- getScreenSize
+  xPos <- getStdRandom (randomR (widthX `div` 2, widthX))
+  yPos <- getStdRandom (randomR (heightY * (-1), heightY `div` 2))
+  xDir <- getStdRandom (randomR (0, widthX))
+  yDir <- getStdRandom (randomR (0, heightY))
   astrSize <- getStdRandom (randomR (50, 1000))
   speed <- getStdRandom (randomR (50, 200))
   return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
@@ -106,7 +109,7 @@ movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{ player1 = mov
 pS:: Float --playerspeed -- teporarly here (will be moved to constants and(probably) remaned later)
 pS = 50
 
-movePlayer' :: MoveDirection -> Float -> Player -> Player 
+movePlayer' :: MoveDirection -> Float -> Player -> Player
 movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
 movePlayer' DownDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y-pS*eTime)}
 movePlayer' LeftDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x-pS*eTime,y)}
