@@ -105,10 +105,10 @@ movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{ player1 = mov
 
 
 movePlayer' :: MoveDirection -> Float -> Player -> Player
-movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
-movePlayer' DownDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y-pS*eTime)}
-movePlayer' LeftDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x-pS*eTime,y)}
-movePlayer' RightDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x+pS*eTime,y)}
+movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos    = (x, y + pS * eTime)}
+movePlayer' DownDir eTime p@(Player _ (x,y) _ _) = p{playerPos  = (x, y - pS * eTime)}
+movePlayer' LeftDir eTime p@(Player _ (x,y) _ _) = p{playerPos  = (x - pS * eTime, y)}
+movePlayer' RightDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x + pS * eTime, y)}
 
 moveAsteroids :: Float -> GameState -> GameState
 moveAsteroids secs gstate = gstate { asteroids = asteroids' }
