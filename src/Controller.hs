@@ -22,17 +22,17 @@ import Text.Printf (printf)
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleTime secs gstate
+step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleTime secs $ movePlayer secs gstate
 step _ gstate = return gstate
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
-input e gstate = return $ testEvent e $ stateFlow e gstate 
+input e gstate = return $ Prelude.foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
-testEvent (EventKey (Char 'd') _ _ _) g@(GameState Playing _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
-testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
+testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
+testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
 testEvent _ g = g
 
 stateFlow :: Event -> GameState -> GameState -- flow between different  states (eventKey will probably be replaced with mouseinput)
@@ -47,12 +47,8 @@ stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _) = gstate
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
 stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState{currentState = Leaderboard}
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState
--- movement
-stateFlow (EventKey (Char 'w') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 UpDir     gstate
-stateFlow (EventKey (Char 'a') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 LeftDir   gstate
-stateFlow (EventKey (Char 's') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 DownDir   gstate
-stateFlow (EventKey (Char 'd') Down _ _) gstate@(GameState Playing p1 _ _ _ _) = movePlayer p1 RightDir  gstate
 stateFlow _ gstate = gstate
+
 
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
 handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
@@ -69,13 +65,14 @@ handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gsta
 handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate)}
 handleInput _ world = world -- Ignore non-keypresses for simplicity
 
-getElapsedTime :: GameState -> Int 
-getElapsedTime gstate@(GameState Playing p1@(Player _ _ _ t1) p2@(Player _ _ _ t2) _ _ _) = max (round t1) $ round t2
-getElapsedTime gstate = 0
+gameTime :: GameState -> Int 
+gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _) = round time
+gameTime (GameState Playing (Player _ _ _ time) _ _ _ _) = round time
+gameTime _ = 0
 
 spawnAsteroid :: GameState -> IO GameState
 spawnAsteroid gstate@(GameState _ _ _ astr _ _) = do
-  let time = getElapsedTime gstate
+  let time = gameTime gstate
   newAstr <- newAsteroid
   if time `mod` 5 == 0 then return $ gstate{asteroids = astr ++ [newAstr] } else return gstate
 
@@ -94,11 +91,19 @@ pureAsteroid = Asteroid (realToFrac screenWidth/2, realToFrac screenHeigth/2) (0
 
 data MoveDirection = UpDir | DownDir | LeftDir | RightDir
 
-movePlayer :: Player -> MoveDirection -> GameState -> GameState
-movePlayer p@(Player liv post dir oldTime) d gstate = gstate{player1 = movePlayer' d p} 
+-- movement
+movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
+movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{player1 = movePlayer' UpDir secs (player1 gstate)}
+                       | member (Char 'a') (keys gstate) = gstate{player1 = movePlayer' LeftDir secs (player1 gstate)}
+                       | member (Char 's') (keys gstate) = gstate{player1 = movePlayer' DownDir secs (player1 gstate)}
+                       | member (Char 'd') (keys gstate) = gstate{player1 = movePlayer' RightDir secs (player1 gstate)}
+                       | otherwise = gstate
 
-movePlayer' :: MoveDirection -> Player -> Player 
-movePlayer' UpDir p@(Player _ (x,y) _ _) = p{playerPos = (x,y+10)}
-movePlayer' DownDir p@(Player _ (x,y) _ _) = p{playerPos = (x,y-10)}
-movePlayer' LeftDir p@(Player _ (x,y) _ _) = p{playerPos = (x-10,y)}
-movePlayer' RightDir p@(Player _ (x,y) _ _) = p{playerPos = (x+10,y)}
+pS:: Float --playerspeed -- teporarly here (will be moved to constants and(probably) remaned later)
+pS = 30
+
+movePlayer' :: MoveDirection -> Float -> Player -> Player 
+movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
+movePlayer' DownDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y-pS*eTime)}
+movePlayer' LeftDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x-pS*eTime,y)}
+movePlayer' RightDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x+pS*eTime,y)}
