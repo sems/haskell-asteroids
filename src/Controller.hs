@@ -80,8 +80,8 @@ spawnAsteroid gstate@(GameState _ _ _ astr _ _) = do
 
 newAsteroid :: IO Asteroid
 newAsteroid = do
-  (heightY, widthX) <- getScreenSize
-  xPos <- getStdRandom (randomR (widthX `div` 2, widthX))
+  (widthX, heightY) <- getScreenSize
+  xPos <- getStdRandom (randomR (0 + ((10 * widthX) `div` 100), widthX `div` 2))
   yPos <- getStdRandom (randomR (heightY * (-1), heightY `div` 2))
   xDir <- getStdRandom (randomR (0, widthX))
   yDir <- getStdRandom (randomR (0, heightY))
