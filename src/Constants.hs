@@ -1,7 +1,9 @@
 module Constants where
 
-screenHeigth :: Int
-screenHeigth = 600
+--playerspeed 
+pS:: Float 
+pS = 50
 
-screenWidth :: Int
-screenWidth = 1000
+--asteroidspeed
+aS :: Float 
+aS = 500

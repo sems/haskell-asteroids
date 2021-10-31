@@ -17,7 +17,7 @@ import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set ( member )
 import qualified Data.Set as S
-import Constants (screenWidth, screenHeigth)
+import Constants ( pS, aS ) 
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit ()
@@ -89,9 +89,6 @@ newAsteroid = do
   speed <- getStdRandom (randomR (50, 200))
   return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
 
-pureAsteroid :: Asteroid
-pureAsteroid = Asteroid (realToFrac screenWidth/2, realToFrac screenHeigth/2) (0,0) 2 1
-
 data MoveDirection = UpDir | DownDir | LeftDir | RightDir
 
 -- movement
@@ -106,10 +103,6 @@ movePlayer secs gstate | member (Char 'w') (keys gstate) = gstate{ player1 = mov
                        | member (SpecialKey KeyRight)  (keys gstate) = gstate{ player2 = movePlayer' RightDir secs (player2 gstate) }
                        | otherwise = gstate
 
-pS:: Float --playerspeed -- teporarly here (will be moved to constants and(probably) remaned later)
-pS = 50
-aS :: Float 
-aS = 500
 
 movePlayer' :: MoveDirection -> Float -> Player -> Player
 movePlayer' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x,y+pS*eTime)}
