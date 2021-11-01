@@ -21,10 +21,10 @@ import qualified Data.Set as S
 import Constants ( pS, aS, baseSize ) 
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
-import System.Exit ()
-import Graphics.Gloss.Geometry.Line
-import Graphics.Gloss.Data.Vector
-import qualified Graphics.Gloss.Data.Point.Arithmetic as A
+import System.Exit (exitSuccess)
+import Graphics.Gloss.Geometry.Line(closestPointOnLine)
+import Graphics.Gloss.Data.Vector (dotV)
+import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
@@ -33,7 +33,12 @@ step _ gstate = return gstate
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
-input e gstate = return $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
+input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
+
+handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
+handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ ) = exitSuccess
+handleExit _ gstate = return gstate 
+
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
@@ -53,12 +58,11 @@ stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _) = gstate
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
 stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState{currentState = Leaderboard}
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState
-stateFlow (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ ) = sneakyExit 0 -- closes game 
-stateFlow (EventKey (SpecialKey KeyEsc) Down _ _) gstate@(GameState Pause _ _ _ _ _ ) = sneakyExit 0
 stateFlow _ gstate = gstate
 
-sneakyExit :: Int -> GameState
-sneakyExit 1 = initialState -- will closes the game because non-exhaustive pattern error (if it works it works :)
+
+--sneakyExit :: Int -> GameState   sadly sneakyExit's rule didn't survive long as the "right" way of termination the program was found
+--sneakyExit 1 = initialState -- will closes the game because non-exhaustive pattern error (if it works it works :)
 
 
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
