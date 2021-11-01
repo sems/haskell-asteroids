@@ -53,7 +53,12 @@ stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _) = gstate
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
 stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState{currentState = Leaderboard}
 stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState
+stateFlow (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ ) = sneakyExit 0 -- closes game 
+stateFlow (EventKey (SpecialKey KeyEsc) Down _ _) gstate@(GameState Pause _ _ _ _ _ ) = sneakyExit 0
 stateFlow _ gstate = gstate
+
+sneakyExit :: Int -> GameState
+sneakyExit 1 = initialState -- will closes the game because non-exhaustive pattern error (if it works it works :)
 
 
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
