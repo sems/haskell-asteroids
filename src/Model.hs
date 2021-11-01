@@ -32,6 +32,7 @@ data Player = Player {
   playerDir  :: Direction,
   time       :: Float 
 }
+  deriving Eq
 
 data Bullet = Bullet {
   bulletPos  :: Position,

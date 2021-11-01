@@ -6,6 +6,7 @@ import Model
       GameState(GameState, asteroids, keys, currentState, player1, player2),
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos )
+import View
 
 import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
@@ -17,19 +18,22 @@ import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set ( member )
 import qualified Data.Set as S
-import Constants ( pS, aS ) 
+import Constants ( pS, aS, baseSize ) 
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit ()
+import Graphics.Gloss.Geometry.Line
+import Graphics.Gloss.Data.Vector
+import qualified Graphics.Gloss.Data.Point.Arithmetic as A
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
+step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
 step _ gstate = return gstate
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
-input e gstate = return $ Prelude.foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
+input e gstate = return $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
@@ -132,3 +136,30 @@ moveAsteroids secs gstate = gstate { asteroids = asteroids' }
 moveAsteroid' :: Float -> Asteroid -> Asteroid
 moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos - speed, yPos)}
   where speed = (secs * aS) * (10 * (sp / 100)) 
+
+--collision stuff
+checkCollision :: Asteroid -> Player -> Bool
+checkCollision _ (Player 0 _ _ _) = False
+checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (getclosest pos) $ getsegments $ playerPath pl 
+  where getsegments[x,y,z] = [(x,y),(y,z),(x,z)]  -- distibute path into line segments
+        getclosest p (x,y) | dotV xy yp > 0 = y    -- get from each line segemnt the closest point to mid asteroid (here x,y aree two points and not coordinates)
+                           | dotV xy xp < 0 = x       --
+                           | otherwise = closestPointOnLine x y p -- used function only looks for the closest point on a infinate line so only used if said closest point of 
+          where xy = x A.- y                                         -- the infinate line is also within segment (which is the case when the needed point isnt either x or y itself)
+                xp = x A.- p
+                yp = y A.- p
+        getdistance (x,y) = sqrt ((x - ax)*(x-ax)+ (y-ay)*(y-ay)) -- get distance between point and mid asteroid
+        thing [] = False 
+        thing (x:xs) | x <= fromIntegral(s* baseSize) = True -- if distance is smaller than the size of asteroid it intersects
+                     | otherwise = thing xs
+
+handleCollision :: GameState -> GameState 
+handleCollision gstate@(GameState _ p1 p2 astrs _ _) = otherthing (thing astrs [] Nothing)
+  where thing [] ys may = (ys, may)
+        thing (x:xs) ys may | checkCollision x p1 = ((xs ++ ys), Just p1)
+                            | checkCollision x p2 = ((xs ++ ys), Just p2)
+                            | otherwise = thing xs (x:ys) may
+        otherthing (as, may) | may == Just p1 = gstate{player1 = p1{lives = lives p1 - 1},asteroids = as} -- sometimes I just don't know what to call functions okey (especially when I don't have the energy to think too much about it (might change later))
+                             | may == Just p2 = gstate{player2 = p2{lives = lives p2 - 1},asteroids = as}
+                             | otherwise = gstate
+

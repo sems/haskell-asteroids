@@ -5,6 +5,7 @@ module View where
 
 import Graphics.Gloss
 import Model
+import Constants
 
 view :: GameState -> IO Picture
 view = return . viewPure
@@ -31,15 +32,17 @@ drawPlaying gstate@(GameState _ p1 p2 _ _ _)  =  drawScore (-490,150) p1 : drawS
         drawScore (x,y) (Player lives _ _ time) = translate x y $ color white $ text ("l:" ++ show lives ++ " s:" ++ show (round time))
 
 
+
 drawPlayers :: GameState -> [Picture]
-drawPlayers (GameState _ (Player lives1 pos1 _ _) (Player lives2 pos2 _ _) _ _ _) = [drawPlayer pos1 blue lives1 , drawPlayer pos2 yellow lives2]
-  where drawPlayer _ _ 0 = blank
-        drawPlayer (x,y) col _ = translate x y $ color col $ polygon [(0,0),(10,30),(20,0)]
+drawPlayers (GameState _ p1 p2 _ _ _) = [drawPlayer p1 blue , drawPlayer p2 yellow ]
+  where drawPlayer (Player 0 _ _ _) _ = blank
+        drawPlayer player col = color col $ polygon $ playerPath player
+
+playerPath :: Player -> Path --dir to be included later
+playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a+x,b+y))[(0,0),(10,30),(20,0)]
 
 drawAsteroids :: GameState -> [Picture]
 drawAsteroids (GameState _ _ _ [] _ _) = [blank]
-drawAsteroids (GameState _ _ _ astr _ _) = getAsteroids astr
+drawAsteroids (GameState _ _ _ astr _ _) = map drawAsteroid astr
   where
-    drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle (realToFrac (siz * 5))
-    getAsteroids [] = []
-    getAsteroids (a:as) = drawAsteroid a : getAsteroids as
+    drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle  (fromIntegral (siz * baseSize))
