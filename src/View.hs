@@ -5,7 +5,7 @@ module View where
 
 import Graphics.Gloss
 import Model
-import Constants
+import Constants ( baseSize, (<?) )
 
 view :: GameState -> IO Picture
 view = return . viewPure
@@ -47,9 +47,6 @@ playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a + x, b + y)) $ playerPath'
 --                       | y == 1  = [(0,0),(20,0) ,(10, 30)] -- point top 
 --                       | y == -1 = [(0,0),(-20,0),(-10, -30)] -- point down
 --                       | otherwise = [(0,0),(0,-20),(30,-10)]
-
-(<?) :: Ord a => a -> (a,a) -> Bool
-(<?) x (min, max) = x >= min && x <= max
 
 playerPath' :: Direction -> [(Float,Float)]
 playerPath' dir@(x,y) | x <? (-1,1) && y == 1  = [(0,0),(20,0) ,(10, 30)]  -- up

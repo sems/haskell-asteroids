@@ -19,7 +19,7 @@ import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set ( member )
 import qualified Data.Set as S
-import Constants ( pS, aS, baseSize, dS )
+import Constants ( pS, aS, baseSize, dS, (<?) )
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit (exitSuccess)
@@ -210,9 +210,6 @@ movePlayerDirection' LeftDir RightDir etime dir@(x,y) =
 
 thresHold :: Float -> Bool
 thresHold x = x >= 1 || x < -1
-
-(<?) :: Ord a => a -> (a,a) -> Bool
-(<?) x (min, max) = x >= min && x <= max
 
 getPlayerDirection :: Direction -> MoveDirection -- in what direction is it currently
 getPlayerDirection dir@(x,y) | x <? (-1,1) && y == 1  = UpDir  -- up
