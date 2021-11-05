@@ -39,7 +39,18 @@ drawPlayers (GameState _ p1 p2 _ _ _) = [drawPlayer p1 blue , drawPlayer p2 yell
         drawPlayer player col = color col $ polygon $ playerPath player
 
 playerPath :: Player -> Path --dir to be included later
-playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a+x,b+y))[(0,0),(10,30),(20,0)]
+playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a + x, b + y)) $ playerPath' dir
+
+(<?) :: Ord a => a -> (a,a) -> Bool
+(<?) x (min, max) = x >= min && x <= max
+
+playerPath' :: Direction -> [(Float,Float)]
+playerPath' dir@(x,y) | x == 1  = [(0,0),(0,-20),(30,-10)] -- point left
+                      | x == -1 = [(0,0),(0,20) ,(-30, 10)]-- point right
+                      | y == 1  = [(0,0),(20,0) ,(10, 30)] -- point top 
+                      | y == -1 = [(0,0),(-20,0),(-10, -30)] -- point down
+                      | otherwise = [(0,0),(0,-20),(30,-10)]
+
 
 drawAsteroids :: GameState -> [Picture]
 drawAsteroids (GameState _ _ _ [] _ _) = [blank]

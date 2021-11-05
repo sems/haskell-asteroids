@@ -70,4 +70,4 @@ initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
-initialState = GameState Main (Player 5 (-100 , 0) (0,0) 0) (Player 5 (100,0) (0,0) 0) [] [] S.empty 
+initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty 
