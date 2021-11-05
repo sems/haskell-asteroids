@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Controller where
 
 import Model
@@ -5,7 +6,7 @@ import Model
       Asteroid(Asteroid),
       GameState(GameState, asteroids, keys, currentState, player1, player2),
       Player(Player, playerPos, time, lives),
-      State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos )
+      State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos, Direction, playerDir )
 import View
 
 import Graphics.Gloss ()
@@ -18,7 +19,7 @@ import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set ( member )
 import qualified Data.Set as S
-import Constants ( pS, aS, baseSize ) 
+import Constants ( pS, aS, baseSize )
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit (exitSuccess)
@@ -37,7 +38,7 @@ input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, 
 
 handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
 handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ ) = exitSuccess
-handleExit _ gstate = return gstate 
+handleExit _ gstate = return gstate
 
 
 -- force certain states within the game in order to test specific functions
@@ -105,8 +106,8 @@ newAsteroid = do
 data MoveDirection = UpDir | DownDir | LeftDir | RightDir
 
 movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
-movePlayer secs gstate = move secs strokes gstate 
-  where 
+movePlayer secs gstate = move secs strokes gstate
+  where
     move :: Float -> [Key] -> GameState -> GameState
     move _  [] gst = gst
     move secs (s:ss) gst = move secs ss ex
@@ -131,25 +132,58 @@ movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' U
 
 
 movePlayer'' :: MoveDirection -> Float -> Player -> Player
-movePlayer'' UpDir eTime p@(Player _ (x,y) _ _) = p{playerPos    = (x, y + pS * eTime)}
-movePlayer'' DownDir eTime p@(Player _ (x,y) _ _) = p{playerPos  = (x, y - pS * eTime)}
-movePlayer'' LeftDir eTime p@(Player _ (x,y) _ _) = p{playerPos  = (x - pS * eTime, y)}
-movePlayer'' RightDir eTime p@(Player _ (x,y) _ _) = p{playerPos = (x + pS * eTime, y)}
+movePlayer'' UpDir eTime p@(Player _ (x,y) dir _) =    p{playerPos  = (x, y + pS * eTime)}
+movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) =  p{playerPos  = (x, y - pS * eTime)}
+-- movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerPos  = (x - pS * eTime, y), playerDir = movePlayerDirection LeftDir eTime dir}
+-- movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerPos  = (x + pS * eTime, y), playerDir = movePlayerDirection RightDir eTime dir}
+movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
+movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerDirection RightDir eTime dir}
+
+
+(<?) :: Ord a => a -> (a,a) -> Bool
+(<?) x (min, max) = x >= min && x <= max
+
+movePlayerDirection :: MoveDirection -> Float -> Direction -> Direction
+movePlayerDirection LeftDir eTime dir@(x,y) =  movePlayerDirection' LeftDir (getPlayerDirection dir) eTime dir
+movePlayerDirection RightDir eTime dir@(x,y) =  movePlayerDirection' RightDir (getPlayerDirection dir) eTime dir
+
+dS :: Float
+dS = 0.10
+
+movePlayerDirection' :: MoveDirection -> MoveDirection -> Float -> Direction -> Direction -- toDirection -> isInDirection -> eTime -> Direction
+-- move right
+movePlayerDirection' RightDir UpDir etime dir@(x,y) = (x + 0.10 * etime ,y) 
+movePlayerDirection' RightDir DownDir etime dir@(x,y) = (x - 0.10 * etime ,y)  
+movePlayerDirection' RightDir LeftDir etime dir@(x,y) = (x, y + 0.10 * etime) 
+movePlayerDirection' RightDir RightDir etime dir@(x,y) = (x, y - 0.10 * etime) 
+-- move left
+movePlayerDirection' LeftDir UpDir etime dir@(x,y) = (x - 0.10 * etime ,y)  
+movePlayerDirection' LeftDir DownDir etime dir@(x,y) = (x + 0.10 * etime ,y)   
+movePlayerDirection' LeftDir LeftDir etime dir@(x,y) = (x, y - 0.10 * etime)  
+movePlayerDirection' LeftDir RightDir etime dir@(x,y) = (x, y + 0.10 * etime)   
+
+
+getPlayerDirection :: Direction -> MoveDirection -- in what direction is it currently
+getPlayerDirection dir@(x,y) | x <? (-1,1) && y == 1  = UpDir  -- up
+                             | x <? (-1,1) && y == -1 = DownDir-- down
+                             | y <? (-1,1) && x == -1 = LeftDir -- left
+                             | y <? (-1,1) && x == 1  = RightDir -- right
+                             | otherwise = RightDir
 
 moveAsteroids :: Float -> GameState -> GameState
 moveAsteroids secs gstate = gstate { asteroids = asteroids' }
-  where 
+  where
     asteroids':: [Asteroid]
     asteroids' = map (moveAsteroid' secs) $ asteroids gstate
 
 moveAsteroid' :: Float -> Asteroid -> Asteroid
 moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos - speed, yPos)}
-  where speed = (secs * aS) * (10 * (sp / 100)) 
+  where speed = (secs * aS) * (10 * (sp / 100))
 
 --collision stuff
 checkCollision :: Asteroid -> Player -> Bool
 checkCollision _ (Player 0 _ _ _) = False
-checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (getclosest pos) $ getsegments $ playerPath pl 
+checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (getclosest pos) $ getsegments $ playerPath pl
   where getsegments[x,y,z] = [(x,y),(y,z),(x,z)]  -- distibute path into line segments
         getclosest p (x,y) | dotV xy yp > 0 = y    -- get from each line segemnt the closest point to mid asteroid (here x,y aree two points and not coordinates)
                            | dotV xy xp < 0 = x       --
@@ -158,11 +192,11 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (
                 xp = x A.- p
                 yp = y A.- p
         getdistance (x,y) = sqrt ((x - ax)*(x-ax)+ (y-ay)*(y-ay)) -- get distance between point and mid asteroid
-        thing [] = False 
+        thing [] = False
         thing (x:xs) | x <= fromIntegral(s* baseSize) = True -- if distance is smaller than the size of asteroid it intersects
                      | otherwise = thing xs
 
-handleCollision :: GameState -> GameState 
+handleCollision :: GameState -> GameState
 handleCollision gstate@(GameState _ p1 p2 astrs _ _) = otherthing (thing astrs [] Nothing)
   where thing [] ys may = (ys, may)
         thing (x:xs) ys may | checkCollision x p1 = ((xs ++ ys), Just p1)
