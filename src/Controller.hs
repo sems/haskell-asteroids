@@ -161,47 +161,22 @@ movePlayerDirection RightDir eTime dir@(x,y) =  movePlayerDirection' RightDir (g
 movePlayerDirection' :: MoveDirection -> MoveDirection -> Float -> Direction -> Direction -- toDirection -> isInDirection -> eTime -> Direction
 -- move right
 movePlayerDirection' RightDir UpDir etime dir@(x,y) = 
-  let x' = x + dS * etime in 
-    if thresHold x' then
-      (1 , y - dS * etime) 
-    else (x' ,y)
-
+  let x' = x + dS * etime in if thresHold x' then (1 , y - dS * etime) else (x' ,y)
 movePlayerDirection' RightDir DownDir etime dir@(x,y) =
-  let x' = x - dS * etime in 
-    if thresHold x' then
-      (-1, y + dS * etime) 
-    else (x' ,y)
+  let x' = x - dS * etime in if thresHold x' then (-1, y + dS * etime) else (x' ,y)
 movePlayerDirection' RightDir LeftDir etime dir@(x,y) =
-  let y' = y + dS * etime in 
-    if thresHold y' then
-      (x + dS * etime, 1) 
-    else (x ,y')
+  let y' = y + dS * etime in if thresHold y' then (x + dS * etime, 1) else (x ,y')
 movePlayerDirection' RightDir RightDir etime dir@(x,y) = 
-  let y' = y - dS * etime in 
-    if thresHold y' then
-      (x - dS * etime, -1) 
-    else (x ,y')
+  let y' = y - dS * etime in if thresHold y' then (x - dS * etime, -1) else (x ,y')
 -- move left
 movePlayerDirection' LeftDir UpDir etime dir@(x,y) = 
-  let x' = x - dS * etime in 
-    if thresHold x' then
-      (-1 , y - dS * etime) 
-    else (x' ,y)
+  let x' = x - dS * etime in if thresHold x' then (-1 , y - dS * etime) else (x' ,y)
 movePlayerDirection' LeftDir DownDir etime dir@(x,y) =
-  let x' = x + dS * etime in 
-    if thresHold x' then
-      (1,  y + dS * etime) 
-    else (x' ,y)
+  let x' = x + dS * etime in if thresHold x' then (1,  y + dS * etime) else (x' ,y)
 movePlayerDirection' LeftDir LeftDir etime dir@(x,y) = 
-  let y' = y - dS * etime in 
-    if thresHold y' then
-      (x + dS * etime, -1) 
-    else (x ,y')
+  let y' = y - dS * etime in if thresHold y' then (x + dS * etime, -1) else (x ,y')
 movePlayerDirection' LeftDir RightDir etime dir@(x,y) = 
-  let y' = y + dS * etime in 
-    if thresHold y' then
-      (x - dS * etime, 1) 
-    else (x ,y')
+  let y' = y + dS * etime in if thresHold y' then (x - dS * etime, 1) else (x ,y')
 
 thresHold :: Float -> Bool
 thresHold x = x >= 1 || x < -1
