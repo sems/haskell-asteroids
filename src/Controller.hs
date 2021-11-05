@@ -7,7 +7,7 @@ import Model
       GameState(GameState, asteroids, keys, currentState, player1, player2),
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos, Direction, playerDir )
-import View
+import View ( playerPath)
 
 import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
@@ -19,7 +19,7 @@ import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set ( member )
 import qualified Data.Set as S
-import Constants ( pS, aS, baseSize )
+import Constants ( pS, aS, baseSize, dS )
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit (exitSuccess)
@@ -29,8 +29,21 @@ import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing _ _ _ _ _) = spawnAsteroid $ checkDeath $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
+step secs gstate@(GameState Playing _ _ _ _ _) = log' $ spawnAsteroid $ checkDeath $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
 step _ gstate = return gstate
+
+log' :: IO GameState -> IO GameState
+log' gstate = do
+  gstate'@(GameState _ p1 p2 _ _ _) <- gstate
+  -- putStr "x:"
+  -- putStr $ show $ getX p1
+  -- putStr " y:"
+  -- print (getY p1)
+  gstate
+  where
+    getX :: Player -> Float
+    getX p@(Player _ pos dir@(x,y) _) = x
+    getY p@(Player _ pos dir@(x,y) _) = y
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
@@ -139,29 +152,67 @@ movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) =  p{playerPos  = (x, y - pS
 movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
 movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerDirection RightDir eTime dir}
 
-
-(<?) :: Ord a => a -> (a,a) -> Bool
-(<?) x (min, max) = x >= min && x <= max
-
 movePlayerDirection :: MoveDirection -> Float -> Direction -> Direction
 movePlayerDirection LeftDir eTime dir@(x,y) =  movePlayerDirection' LeftDir (getPlayerDirection dir) eTime dir
 movePlayerDirection RightDir eTime dir@(x,y) =  movePlayerDirection' RightDir (getPlayerDirection dir) eTime dir
 
-dS :: Float
-dS = 0.10
+
 
 movePlayerDirection' :: MoveDirection -> MoveDirection -> Float -> Direction -> Direction -- toDirection -> isInDirection -> eTime -> Direction
 -- move right
-movePlayerDirection' RightDir UpDir etime dir@(x,y) = (x + 0.10 * etime ,y) 
-movePlayerDirection' RightDir DownDir etime dir@(x,y) = (x - 0.10 * etime ,y)  
-movePlayerDirection' RightDir LeftDir etime dir@(x,y) = (x, y + 0.10 * etime) 
-movePlayerDirection' RightDir RightDir etime dir@(x,y) = (x, y - 0.10 * etime) 
--- move left
-movePlayerDirection' LeftDir UpDir etime dir@(x,y) = (x - 0.10 * etime ,y)  
-movePlayerDirection' LeftDir DownDir etime dir@(x,y) = (x + 0.10 * etime ,y)   
-movePlayerDirection' LeftDir LeftDir etime dir@(x,y) = (x, y - 0.10 * etime)  
-movePlayerDirection' LeftDir RightDir etime dir@(x,y) = (x, y + 0.10 * etime)   
+movePlayerDirection' RightDir UpDir etime dir@(x,y) = 
+  let x' = x + dS * etime in 
+    if thresHold x' then
+      (1 , y - dS * etime) 
+    else (x' ,y)
 
+movePlayerDirection' RightDir DownDir etime dir@(x,y) =
+  let x' = x - dS * etime in 
+    if thresHold x' then
+      (-1, y + dS * etime) 
+    else (x' ,y)
+  --  (x - dS * etime ,y)
+movePlayerDirection' RightDir LeftDir etime dir@(x,y) =
+  let y' = y + dS * etime in 
+    if thresHold y' then
+      (x + dS * etime, 1) 
+    else (x ,y')
+  --  (x, y + dS * etime)
+movePlayerDirection' RightDir RightDir etime dir@(x,y) = 
+  let y' = y - dS * etime in 
+    if thresHold y' then
+      (x - dS * etime, -1) 
+    else (x ,y')
+  -- (x, y - dS * etime)
+-- move left
+movePlayerDirection' LeftDir UpDir etime dir@(x,y) = 
+  let x' = x - dS * etime in 
+    if thresHold x' then
+      (-1 , y - dS * etime) 
+    else (x' ,y)
+movePlayerDirection' LeftDir DownDir etime dir@(x,y) =
+  let x' = x + dS * etime in 
+    if thresHold x' then
+      (1,  y + dS * etime) 
+    else (x' ,y)
+  --  (x + dS * etime ,y)
+movePlayerDirection' LeftDir LeftDir etime dir@(x,y) = 
+  let y' = y - dS * etime in 
+    if thresHold y' then
+      (x + dS * etime, -1) 
+    else (x ,y')
+  -- (x, y - dS * etime)
+movePlayerDirection' LeftDir RightDir etime dir@(x,y) = 
+  let y' = y + dS * etime in 
+    if thresHold y' then
+      (x - dS * etime, 1) 
+    else (x ,y')
+
+thresHold :: Float -> Bool
+thresHold x = x >= 1 || x < -1
+
+(<?) :: Ord a => a -> (a,a) -> Bool
+(<?) x (min, max) = x >= min && x <= max
 
 getPlayerDirection :: Direction -> MoveDirection -- in what direction is it currently
 getPlayerDirection dir@(x,y) | x <? (-1,1) && y == 1  = UpDir  -- up

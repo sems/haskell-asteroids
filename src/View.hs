@@ -48,11 +48,20 @@ playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a + x, b + y)) $ playerPath'
 --                       | y == -1 = [(0,0),(-20,0),(-10, -30)] -- point down
 --                       | otherwise = [(0,0),(0,-20),(30,-10)]
 
+(<?) :: Ord a => a -> (a,a) -> Bool
+(<?) x (min, max) = x >= min && x <= max
+
 playerPath' :: Direction -> [(Float,Float)]
-playerPath' dir@(1,y)  = [(0,0),(0,-20),(30,-10)] -- point left
-playerPath' dir@(x,1) =  [(0,0),(20,0) ,(10, 30)] -- point top 
-playerPath' dir@(-1,y) = [(0,0),(0,20) ,(-30, 10)]-- point right
-playerPath' dir@(x,-1) = [(0,0),(-20,0),(-10, -30)] -- point down
+playerPath' dir@(x,y) | x <? (-1,1) && y == 1  = [(0,0),(20,0) ,(10, 30)]  -- up
+                      | x <? (-1,1) && y == -1 = [(0,0),(-20,0),(-10, -30)]-- down
+                      | y <? (-1,1) && x == -1 = [(0,0),(0,20) ,(-30, 10)] -- left
+                      | y <? (-1,1) && x == 1  = [(0,0),(0,-20),(30,-10)]-- right
+                      | otherwise =  [(0,0),(0,-20),(30,-10)]
+
+-- playerPath' dir@(1,y)  = [(0,0),(0,-20),(30,-10)] -- point left
+-- playerPath' dir@(x,1) =  [(0,0),(20,0) ,(10, 30)] -- point top 
+-- playerPath' dir@(-1,y) = [(0,0),(0,20) ,(-30, 10)]-- point right
+-- playerPath' dir@(x,-1) = [(0,0),(-20,0),(-10, -30)] -- point down
 
 
 drawAsteroids :: GameState -> [Picture]
