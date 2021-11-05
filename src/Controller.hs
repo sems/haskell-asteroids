@@ -171,19 +171,16 @@ movePlayerDirection' RightDir DownDir etime dir@(x,y) =
     if thresHold x' then
       (-1, y + dS * etime) 
     else (x' ,y)
-  --  (x - dS * etime ,y)
 movePlayerDirection' RightDir LeftDir etime dir@(x,y) =
   let y' = y + dS * etime in 
     if thresHold y' then
       (x + dS * etime, 1) 
     else (x ,y')
-  --  (x, y + dS * etime)
 movePlayerDirection' RightDir RightDir etime dir@(x,y) = 
   let y' = y - dS * etime in 
     if thresHold y' then
       (x - dS * etime, -1) 
     else (x ,y')
-  -- (x, y - dS * etime)
 -- move left
 movePlayerDirection' LeftDir UpDir etime dir@(x,y) = 
   let x' = x - dS * etime in 
@@ -195,13 +192,11 @@ movePlayerDirection' LeftDir DownDir etime dir@(x,y) =
     if thresHold x' then
       (1,  y + dS * etime) 
     else (x' ,y)
-  --  (x + dS * etime ,y)
 movePlayerDirection' LeftDir LeftDir etime dir@(x,y) = 
   let y' = y - dS * etime in 
     if thresHold y' then
       (x + dS * etime, -1) 
     else (x ,y')
-  -- (x, y - dS * etime)
 movePlayerDirection' LeftDir RightDir etime dir@(x,y) = 
   let y' = y + dS * etime in 
     if thresHold y' then
