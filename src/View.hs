@@ -41,20 +41,16 @@ drawPlayers (GameState _ p1 p2 _ _ _) = [drawPlayer p1 blue , drawPlayer p2 yell
 playerPath :: Player -> Path --dir to be included later
 playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a + x, b + y)) $ playerPath' dir
 
--- -- old code without pattern matching
--- playerPath' dir@(x,y) | x == 1  = [(0,0),(0,-20),(30,-10)] -- point left
---                       | x == -1 = [(0,0),(0,20) ,(-30, 10)]-- point right
---                       | y == 1  = [(0,0),(20,0) ,(10, 30)] -- point top 
---                       | y == -1 = [(0,0),(-20,0),(-10, -30)] -- point down
---                       | otherwise = [(0,0),(0,-20),(30,-10)]
-
 playerPath' :: Direction -> [(Float,Float)]
-playerPath' dir@(x,y) | x <? (-1,1) && y == 1  = [(0,0),(20,0) ,(10, 30)]  -- up
-                      | x <? (-1,1) && y == -1 = [(0,0),(-20,0),(-10, -30)]-- down
-                      | y <? (-1,1) && x == -1 = [(0,0),(0,20) ,(-30, 10)] -- left
-                      | y <? (-1,1) && x == 1  = [(0,0),(0,-20),(30,-10)]-- right
-                      | otherwise =  [(0,0),(0,-20),(30,-10)]
-
+playerPath' dir@(x,y) | x <? (-1, -0.5) && y == 1 || x == -1 && y <? (0.5, 1)    = [(-7.1,-7.1),(7.1,7.1) ,(-21.2, 21.2)] -- top left corner
+                      | x <? (-1, -0.5) && y == -1 || x == -1 && y <? (-1, -0.5) = [(7.1,-7.1),(-7.1,7.1) ,(-21.2, -21.2)] -- botton left corner
+                      | x <? (0.5, 1) && y == 1 || x == 1 && y <? (0.5, 1)       = [(-7.1,7.1), (7.1,-7.1) ,(21.2, 21.2)] -- top right corner
+                      | x <? (0.5, 1) && y == -1 || x == 1 && y <? (-1, -0.5)    = [(7.1,7.1),(-7.1,-7.1) ,(21.2, -21.2)] -- botton right corner
+                      | x <? (-1,1) && y == 1  = [(-10,0),(10,0) ,(0, 30)]  -- up
+                      | x <? (-1,1) && y == -1 = [(-10,0),(10,0) ,(0, -30)]-- down
+                      | y <? (-1,1) && x == -1 = [(0, -10),(0,10) ,(-30, 0)] -- left
+                      | y <? (-1,1) && x == 1  = [(0, 10),(0,-10) ,(30, 0)]-- right
+                      | otherwise =  [(-10,0),(0,10) ,(30, 0)]
 
 drawAsteroids :: GameState -> [Picture]
 drawAsteroids (GameState _ _ _ [] _ _) = [blank]
