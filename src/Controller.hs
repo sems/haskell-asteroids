@@ -24,8 +24,9 @@ import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit (exitSuccess)
 import Graphics.Gloss.Geometry.Line(closestPointOnLine)
-import Graphics.Gloss.Data.Vector (dotV)
+import Graphics.Gloss.Data.Vector (dotV, angleVV, argV)
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
+
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
@@ -39,6 +40,7 @@ log' gstate = do
   -- putStr $ show $ getX p1
   -- putStr " y:"
   -- print (getY p1)
+  -- print (argV (-1,-1))
   gstate
   where
     getX :: Player -> Float
@@ -145,14 +147,14 @@ movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' U
                             | otherwise = gstate
 
 movePlayer'' :: MoveDirection -> Float -> Player -> Player
-movePlayer'' UpDir eTime p@(Player _ (x,y) dir _) = 
+movePlayer'' UpDir eTime p@(Player _ (x,y) dir _) =
   case getPlayerDirection dir of
     UpDir -> p{playerPos  = (x, y + pS * eTime)} -- move up
     DownDir -> p{playerPos  = (x, y - pS * eTime)} -- move down
     LeftDir -> p{playerPos  = (x - pS * eTime, y)} -- move to left
     RightDir -> p{playerPos  = (x + pS * eTime, y)} -- move to right
 
-movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) = 
+movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) =
   case getPlayerDirection dir of
     UpDir -> p{playerPos  = (x, y - pS * eTime)} -- move up
     DownDir -> p{playerPos  = (x, y + pS * eTime)} -- move down
@@ -168,22 +170,22 @@ movePlayerDirection RightDir eTime dir@(x,y) =  movePlayerDirection' RightDir (g
 
 movePlayerDirection' :: MoveDirection -> MoveDirection -> Float -> Direction -> Direction -- toDirection -> isInDirection -> eTime -> Direction
 -- move right
-movePlayerDirection' RightDir UpDir etime dir@(x,y) = 
+movePlayerDirection' RightDir UpDir etime dir@(x,y) =
   let x' = x + dS * etime in if thresHold x' then (1 , y - dS * etime) else (x' ,y)
 movePlayerDirection' RightDir DownDir etime dir@(x,y) =
   let x' = x - dS * etime in if thresHold x' then (-1, y + dS * etime) else (x' ,y)
 movePlayerDirection' RightDir LeftDir etime dir@(x,y) =
   let y' = y + dS * etime in if thresHold y' then (x + dS * etime, 1) else (x ,y')
-movePlayerDirection' RightDir RightDir etime dir@(x,y) = 
+movePlayerDirection' RightDir RightDir etime dir@(x,y) =
   let y' = y - dS * etime in if thresHold y' then (x - dS * etime, -1) else (x ,y')
 -- move left
-movePlayerDirection' LeftDir UpDir etime dir@(x,y) = 
+movePlayerDirection' LeftDir UpDir etime dir@(x,y) =
   let x' = x - dS * etime in if thresHold x' then (-1 , y - dS * etime) else (x' ,y)
 movePlayerDirection' LeftDir DownDir etime dir@(x,y) =
   let x' = x + dS * etime in if thresHold x' then (1,  y + dS * etime) else (x' ,y)
-movePlayerDirection' LeftDir LeftDir etime dir@(x,y) = 
+movePlayerDirection' LeftDir LeftDir etime dir@(x,y) =
   let y' = y - dS * etime in if thresHold y' then (x + dS * etime, -1) else (x ,y')
-movePlayerDirection' LeftDir RightDir etime dir@(x,y) = 
+movePlayerDirection' LeftDir RightDir etime dir@(x,y) =
   let y' = y + dS * etime in if thresHold y' then (x - dS * etime, 1) else (x ,y')
 
 thresHold :: Float -> Bool
