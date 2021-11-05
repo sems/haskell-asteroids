@@ -55,11 +55,6 @@ playerPath' dir@(x,y) | x <? (-1,1) && y == 1  = [(0,0),(20,0) ,(10, 30)]  -- up
                       | y <? (-1,1) && x == 1  = [(0,0),(0,-20),(30,-10)]-- right
                       | otherwise =  [(0,0),(0,-20),(30,-10)]
 
--- playerPath' dir@(1,y)  = [(0,0),(0,-20),(30,-10)] -- point left
--- playerPath' dir@(x,1) =  [(0,0),(20,0) ,(10, 30)] -- point top 
--- playerPath' dir@(-1,y) = [(0,0),(0,20) ,(-30, 10)]-- point right
--- playerPath' dir@(x,-1) = [(0,0),(-20,0),(-10, -30)] -- point down
-
 
 drawAsteroids :: GameState -> [Picture]
 drawAsteroids (GameState _ _ _ [] _ _) = [blank]

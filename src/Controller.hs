@@ -117,6 +117,7 @@ newAsteroid = do
   return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
 
 data MoveDirection = UpDir | DownDir | LeftDir | RightDir
+  deriving Eq
 
 movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
 movePlayer secs gstate = move secs strokes gstate
@@ -143,10 +144,21 @@ movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' U
                             | key == SpecialKey KeyRight = gstate{ player2 = movePlayer'' RightDir secs (player2 gstate) }
                             | otherwise = gstate
 
-
 movePlayer'' :: MoveDirection -> Float -> Player -> Player
-movePlayer'' UpDir eTime p@(Player _ (x,y) dir _) =    p{playerPos  = (x, y + pS * eTime)}
-movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) =  p{playerPos  = (x, y - pS * eTime)}
+movePlayer'' UpDir eTime p@(Player _ (x,y) dir _) = 
+  case getPlayerDirection dir of
+    UpDir -> p{playerPos  = (x, y + pS * eTime)} -- move up
+    DownDir -> p{playerPos  = (x, y - pS * eTime)} -- move down
+    LeftDir -> p{playerPos  = (x - pS * eTime, y)} -- move to left
+    RightDir -> p{playerPos  = (x + pS * eTime, y)} -- move to right
+
+movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) = 
+  case getPlayerDirection dir of
+    UpDir -> p{playerPos  = (x, y - pS * eTime)} -- move up
+    DownDir -> p{playerPos  = (x, y + pS * eTime)} -- move down
+    LeftDir -> p{playerPos  = (x + pS * eTime, y)} -- move to left
+    RightDir -> p{playerPos  = (x - pS * eTime, y)} -- move to right
+
 -- movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerPos  = (x - pS * eTime, y), playerDir = movePlayerDirection LeftDir eTime dir}
 -- movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerPos  = (x + pS * eTime, y), playerDir = movePlayerDirection RightDir eTime dir}
 movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
@@ -155,8 +167,6 @@ movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerD
 movePlayerDirection :: MoveDirection -> Float -> Direction -> Direction
 movePlayerDirection LeftDir eTime dir@(x,y) =  movePlayerDirection' LeftDir (getPlayerDirection dir) eTime dir
 movePlayerDirection RightDir eTime dir@(x,y) =  movePlayerDirection' RightDir (getPlayerDirection dir) eTime dir
-
-
 
 movePlayerDirection' :: MoveDirection -> MoveDirection -> Float -> Direction -> Direction -- toDirection -> isInDirection -> eTime -> Direction
 -- move right
