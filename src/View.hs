@@ -41,8 +41,8 @@ drawPlayers (GameState _ p1 p2 _ _ _) = [drawPlayer p1 blue , drawPlayer p2 yell
 playerPath :: Player -> Path
 playerPath (Player _ (x,y) dir _) = map (\(a,b) -> (a + x, b + y)) $ playerPath' dir
 
-playerPath' :: Direction -> [Point]
-playerPath' dir@(x,y) = map (rotateV (argV (x,y))) [(0, 10),(0,-10) ,(30, 0)]
+playerPath' :: Vector -> [Point]
+playerPath' dir = map (rotateV (argV dir)) [(0, 10),(0,-10) ,(30, 0)]
 
 drawAsteroids :: GameState -> [Picture]
 drawAsteroids (GameState _ _ _ [] _ _) = [blank]
