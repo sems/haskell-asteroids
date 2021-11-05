@@ -159,8 +159,6 @@ movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) =
     LeftDir -> p{playerPos  = (x + pS * eTime, y)} -- move to left
     RightDir -> p{playerPos  = (x - pS * eTime, y)} -- move to right
 
--- movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerPos  = (x - pS * eTime, y), playerDir = movePlayerDirection LeftDir eTime dir}
--- movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerPos  = (x + pS * eTime, y), playerDir = movePlayerDirection RightDir eTime dir}
 movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
 movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerDirection RightDir eTime dir}
 
