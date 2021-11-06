@@ -148,7 +148,7 @@ movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' U
 
 movePlayer'' :: MoveDirection -> Float -> Player -> Player
 movePlayer'' UpDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos + (xDir * pS * eTime), yPos + (yDir * pS * eTime))}
-movePlayer'' DownDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos + (-1 * (xDir * pS * eTime)), yPos + (-1 * (yDir * pS * eTime)))}
+movePlayer'' DownDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos - (xDir * pS * eTime), yPos - (yDir * pS * eTime))}
 
 movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
 movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerDirection RightDir eTime dir}
