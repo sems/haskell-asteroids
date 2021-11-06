@@ -147,19 +147,8 @@ movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' U
                             | otherwise = gstate
 
 movePlayer'' :: MoveDirection -> Float -> Player -> Player
-movePlayer'' UpDir eTime p@(Player _ (x,y) dir _) =
-  case getPlayerDirection dir of
-    UpDir -> p{playerPos  = (x, y + pS * eTime)} -- move up
-    DownDir -> p{playerPos  = (x, y - pS * eTime)} -- move down
-    LeftDir -> p{playerPos  = (x - pS * eTime, y)} -- move to left
-    RightDir -> p{playerPos  = (x + pS * eTime, y)} -- move to right
-
-movePlayer'' DownDir eTime p@(Player _ (x,y) dir _) =
-  case getPlayerDirection dir of
-    UpDir -> p{playerPos  = (x, y - pS * eTime)} -- move up
-    DownDir -> p{playerPos  = (x, y + pS * eTime)} -- move down
-    LeftDir -> p{playerPos  = (x + pS * eTime, y)} -- move to left
-    RightDir -> p{playerPos  = (x - pS * eTime, y)} -- move to right
+movePlayer'' UpDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos + (xDir * pS * eTime), yPos + (yDir * pS * eTime))}
+movePlayer'' DownDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos + (-1 * (xDir * pS * eTime)), yPos + (-1 * (yDir * pS * eTime)))}
 
 movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
 movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerDirection RightDir eTime dir}
