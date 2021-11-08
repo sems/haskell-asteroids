@@ -6,7 +6,8 @@ import Model
     ( initialState,
       Asteroid(Asteroid),
       ScoreEntry(ScoreEntry, name, score),
-      GameState(GameState, asteroids, keys, currentState, player1, player2),
+      GameMode(Coop, SinglePlayer),
+      GameState(GameState, asteroids, keys, currentState, player1, player2, playerName),
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos, Direction, playerDir )
 import View ( playerPath)
@@ -66,16 +67,18 @@ instance Ae.ToJSON ScoreEntry where
 
 instance Ae.FromJSON ScoreEntry
 
-getScore :: IO [ScoreEntry]
-getScore = fmap list mlist
-  where mlist = Ae.decodeFileStrict "LeaderBoard.json"
+getScore :: GameMode -> IO [ScoreEntry]
+getScore m = fmap list $ mlist m
+  where mlist SinglePlayer = Ae.decodeFileStrict "SingleBoard.json"
+        mlist Coop = Ae.decodeFileStrict "CoopBoard.json"
         list (Just a) = a
         list Nothing = []
 
-insertScore g = newList >>= B.writeFile "LeaderBoard.json" . Ae.encode  
-  where list = getScore
-        entry =  ScoreEntry "asd" 223
-        newList = fmap (entry :) list 
+insertScore :: GameState -> IO ()
+insertScore g | time (player2 g) == 0 =   (getScore SinglePlayer) >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
+              | otherwise = (getScore Coop) >>= B.writeFile "CoopBoard.json" . Ae.encode  .(entry :)
+  where entry =  ScoreEntry (playerName g) newScore
+        newScore = round ( time (player2 g) + time (player1 g))
         
 
 

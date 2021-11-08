@@ -58,7 +58,7 @@ data ScoreEntry = ScoreEntry {
   score :: Score 
 }
   deriving Generic
-  
+
 data State = Main
   | Playing
   | GameOver
@@ -67,7 +67,7 @@ data State = Main
   | Choose
 
 data GameMode = Coop | SinglePlayer
-  deriving Show
+  deriving (Show, Eq)
 
 initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
