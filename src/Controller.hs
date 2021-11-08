@@ -9,14 +9,14 @@ import Model
       GameMode(Coop, SinglePlayer),
       GameState(GameState, asteroids, keys, currentState, player1, player2, playerName),
       Player(Player, playerPos, time, lives),
-      State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos, Direction, playerDir )
+      State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir )
 import View ( playerPath)
 
 import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
     ( Key(SpecialKey, Char),
       KeyState(Up, Down),
-      SpecialKey(KeyEsc, KeyDown, KeyLeft, KeyRight, KeyUp),
+      SpecialKey(KeyEsc, KeyDown, KeyLeft, KeyRight, KeyUp, KeyBackspace, KeyEnter),
       Event(EventKey) )
 import System.Random ( getStdRandom, Random(randomR) )
 
@@ -56,6 +56,7 @@ log' gstate = do
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
+input e gstate@(GameState GetName _ _ _ _ _ _) = return $ getName e gstate
 input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
 
 handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
@@ -66,6 +67,8 @@ instance Ae.ToJSON ScoreEntry where
     toEncoding = Ae.genericToEncoding Ae.defaultOptions
 
 instance Ae.FromJSON ScoreEntry
+
+
 
 getScore :: GameMode -> IO [ScoreEntry]
 getScore m = fmap list $ mlist m
@@ -81,6 +84,12 @@ insertScore g | time (player2 g) == 0 =   (getScore SinglePlayer) >>= B.writeFil
         newScore = round ( time (player2 g) + time (player1 g))
         
 
+getName :: Event -> GameState -> GameState
+getName (EventKey (SpecialKey KeyEnter) _ _ _) g = g{currentState = Choose}
+getName (EventKey (SpecialKey KeyLeft) Down _ _) g | playerName g == "" = g
+                                                   | otherwise = g{playerName = take (length (playerName g) - 1) (playerName g) }
+getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}          
+getName _ g = g                                       
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
@@ -89,7 +98,7 @@ testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _ _) = g {pla
 testEvent _ g = g
 
 stateFlow :: Event -> GameState -> GameState -- flow between different  states (eventKey will probably be replaced with mouseinput)
-stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = initialState {currentState = Choose}  -- new game
+stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = initialState {currentState = GetName}  -- new game
 stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = gstate {currentState = Playing}      -- continue game
 stateFlow (EventKey (Char '1') _ _ _) gstate@(GameState Choose _ _ _ _ _ _) = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}} -- singeplayer
 stateFlow (EventKey (Char '2') _ _ _) gstate@(GameState Choose _ _ _ _ _ _) = gstate {currentState = Playing } -- coop

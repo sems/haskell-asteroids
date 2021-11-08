@@ -65,6 +65,7 @@ data State = Main
   | Pause
   | Leaderboard
   | Choose
+  | GetName
 
 data GameMode = Coop | SinglePlayer
   deriving (Show, Eq)

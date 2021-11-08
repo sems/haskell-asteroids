@@ -20,6 +20,7 @@ viewPure gstate = case currentState gstate of -- temp indications for states
   Pause       -> color green (text "Pause")
   Leaderboard -> color green (text "Leaderboard")
   Choose      -> color green (text "choose")
+  GetName     -> color green (text $ playerName gstate)
 
 drawGameOver :: GameState -> [Picture]
 drawGameOver gstate@(GameState _ (Player _ _ _ time1) (Player _ _ _ time2) _ _ _ _) =
