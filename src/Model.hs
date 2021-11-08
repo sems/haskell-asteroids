@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 -- | This module contains the data types
 --   which represent the state of the game
 module Model where
@@ -5,6 +6,7 @@ import System.Random
 import Data.Set
 import qualified Data.Set as S
 import Graphics.Gloss.Interface.IO.Interact (Key)
+import GHC.Generics
 
 data InfoToShow = ShowNothing
                 | ShowANumber Int
@@ -23,7 +25,8 @@ data GameState = GameState {
   player2      :: Player,
   asteroids    :: [Asteroid],
   bullets      :: [Bullet],
-  keys         :: S.Set Key
+  keys         :: S.Set Key,
+  playerName   :: String
 }
 
 data Player = Player {
@@ -52,10 +55,10 @@ data Asteroid = Asteroid {
 
 data ScoreEntry = ScoreEntry {
   name  :: String,
-  score :: Score,
-  mode  :: GameMode 
+  score :: Score 
 }
-
+  deriving Generic
+  
 data State = Main
   | Playing
   | GameOver
@@ -70,4 +73,4 @@ initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
-initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty 
+initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty ""

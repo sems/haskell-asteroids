@@ -12,7 +12,9 @@ executable asteroids
   build-depends:       base >= 4 && < 5,
                        gloss,
                        random,
-                       containers
+                       containers,
+                       aeson,
+                       bytestring
   hs-source-dirs:      src
   other-modules:       Controller
                      , Model

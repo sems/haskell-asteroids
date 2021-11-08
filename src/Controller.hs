@@ -1,9 +1,11 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Controller where
 
 import Model
     ( initialState,
       Asteroid(Asteroid),
+      ScoreEntry(ScoreEntry, name, score),
       GameState(GameState, asteroids, keys, currentState, player1, player2),
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing), asteriodPos, Direction, playerDir )
@@ -18,6 +20,7 @@ import Graphics.Gloss.Interface.IO.Game
 import System.Random ( getStdRandom, Random(randomR) )
 
 import Data.Set ( member )
+import Data.Maybe (fromJust)
 import qualified Data.Set as S
 import Constants ( pS, aS, baseSize, dS, (<?) )
 import Text.Printf (printf)
@@ -26,16 +29,19 @@ import System.Exit (exitSuccess)
 import Graphics.Gloss.Geometry.Line(closestPointOnLine)
 import Graphics.Gloss.Data.Vector (dotV, angleVV, argV)
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
+import qualified Data.Aeson as Ae
+import qualified Data.ByteString.Lazy as B
 
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing _ _ _ _ _) = log' $ spawnAsteroid $ checkDeath $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
+step secs gstate@(GameState Playing (Player 0 _ _ _) (Player 0 _ _ _) _ _ _ _) = insertScore gstate >> return gstate{currentState = GameOver}
+step secs gstate@(GameState Playing _ _ _ _ _ _) = log' $ spawnAsteroid $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
 step _ gstate = return gstate
 
 log' :: IO GameState -> IO GameState
 log' gstate = do
-  gstate'@(GameState _ p1 p2 _ _ _) <- gstate
+  gstate'@(GameState _ p1 p2 _ _ _ _) <- gstate
   -- putStr "x:"
   -- putStr $ show $ getX p1
   -- putStr " y:"
@@ -52,44 +58,54 @@ input :: Event -> GameState -> IO GameState
 input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
 
 handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
-handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ ) = exitSuccess
+handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ ) = exitSuccess
 handleExit _ gstate = return gstate
+
+instance Ae.ToJSON ScoreEntry where
+    toEncoding = Ae.genericToEncoding Ae.defaultOptions
+
+instance Ae.FromJSON ScoreEntry
+
+getScore :: IO [ScoreEntry]
+getScore = fmap list mlist
+  where mlist = Ae.decodeFileStrict "LeaderBoard.json"
+        list (Just a) = a
+        list Nothing = []
+
+insertScore g = newList >>= B.writeFile "LeaderBoard.json" . Ae.encode  
+  where list = getScore
+        entry =  ScoreEntry "asd" 223
+        newList = fmap (entry :) list 
+        
 
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
-testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
-testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
+testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
+testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
 testEvent _ g = g
 
 stateFlow :: Event -> GameState -> GameState -- flow between different  states (eventKey will probably be replaced with mouseinput)
-stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _) = initialState {currentState = Choose}  -- new game
-stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Main _ _ _ _ _) = gstate {currentState = Playing}      -- continue game
-stateFlow (EventKey (Char '1') _ _ _) gstate@(GameState Choose _ _ _ _ _) = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}} -- singeplayer
-stateFlow (EventKey (Char '2') _ _ _) gstate@(GameState Choose _ _ _ _ _) = gstate {currentState = Playing } -- coop
-stateFlow (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Playing _ _ _ _ _) = gstate {currentState = Pause} --pause game
-stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Pause _ _ _ _ _) = gstate {currentState = Playing} -- contine game
-stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Pause _ _ _ _ _) = gstate {currentState = Main}  -- back to main menu (without losing progress)
-stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _) = gstate {currentState = Leaderboard} -- view leaderboard
-stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
-stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState{currentState = Leaderboard}
-stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _) = initialState
+stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = initialState {currentState = Choose}  -- new game
+stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = gstate {currentState = Playing}      -- continue game
+stateFlow (EventKey (Char '1') _ _ _) gstate@(GameState Choose _ _ _ _ _ _) = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}} -- singeplayer
+stateFlow (EventKey (Char '2') _ _ _) gstate@(GameState Choose _ _ _ _ _ _) = gstate {currentState = Playing } -- coop
+stateFlow (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Playing _ _ _ _ _ _) = gstate {currentState = Pause} --pause game
+stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Pause _ _ _ _ _ _) = gstate {currentState = Playing} -- contine game
+stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Pause _ _ _ _ _ _) = gstate {currentState = Main}  -- back to main menu (without losing progress)
+stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = gstate {currentState = Leaderboard} -- view leaderboard
+stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
+stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _ _) = initialState{currentState = Leaderboard}
+stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _ _) = initialState
 stateFlow _ gstate = gstate
 
 
---sneakyExit :: Int -> GameState   sadly sneakyExit's rule didn't survive long as the "right" way of termination the program was found
---sneakyExit 1 = initialState -- will closes the game because non-exhaustive pattern error (if it works it works :)
-
-
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
-handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
+handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
 handleTime _ gstate = gstate
 
-checkDeath :: GameState -> GameState
-checkDeath gstate@(GameState _ (Player 0 _ _ _) (Player 0 _ _ _) _ _ _) = gstate{ currentState = GameOver}
-checkDeath gstate = gstate
 
 handleInput :: Event -> GameState -> GameState
 handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gstate)}
@@ -97,12 +113,12 @@ handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate
 handleInput _ world = world -- Ignore non-keypresses for simplicity
 
 gameTime :: GameState -> Int
-gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _) = round time
-gameTime (GameState Playing (Player _ _ _ time) _ _ _ _) = round time
+gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _ _) = round time
+gameTime (GameState Playing (Player _ _ _ time) _ _ _ _ _) = round time
 gameTime _ = 0
 
 spawnAsteroid :: GameState -> IO GameState
-spawnAsteroid gstate@(GameState _ _ _ astr _ _) = do
+spawnAsteroid gstate@(GameState _ _ _ astr _ _ _) = do
   let time = gameTime gstate
   newAstr <- newAsteroid
   if time `mod` 5 == 0 then return $ gstate{asteroids = astr ++ [newAstr] } else return gstate
@@ -214,7 +230,7 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (
                      | otherwise = thing xs
 
 handleCollision :: GameState -> GameState
-handleCollision gstate@(GameState _ p1 p2 astrs _ _) = otherthing (thing astrs [] Nothing)
+handleCollision gstate@(GameState _ p1 p2 astrs _ _ _) = otherthing (thing astrs [] Nothing)
   where thing [] ys may = (ys, may)
         thing (x:xs) ys may | checkCollision x p1 = ((xs ++ ys), Just p1)
                             | checkCollision x p2 = ((xs ++ ys), Just p2)
