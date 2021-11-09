@@ -138,7 +138,7 @@ newAsteroid = do
 --collision stuff
 checkCollision :: Asteroid -> Player -> Bool
 checkCollision _ (Player 0 _ _ _) = False
-checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map (getdistance . getclosest pos) (getsegments $ playerPath pl)
+checkCollision (Asteroid pos@(ax,ay) _ s _) pl = doesCollide $ map (getdistance . getclosest pos) (getsegments $ playerPath pl)
   where getsegments[x,y,z] = [(x,y),(y,z),(x,z)]  -- distibute path into line segments
         getclosest p (x,y) | dotV xy yp > 0 = y    -- get from each line segemnt the closest point to mid asteroid (here x,y aree two points and not coordinates)
                            | dotV xy xp < 0 = x       --
@@ -147,9 +147,10 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map (getdistance . getc
                 xp = x A.- p
                 yp = y A.- p
         getdistance (x,y) = sqrt ((x - ax)*(x-ax)+ (y-ay)*(y-ay)) -- get distance between point and mid asteroid
-        thing [] = False
-        thing (x:xs) | x <= fromIntegral(s* baseSize) = True -- if distance is smaller than the size of asteroid it intersects
-                     | otherwise = thing xs
+        doesCollide :: (Ord a, Num a) => [a] -> Bool
+        doesCollide [] = False
+        doesCollide (x:xs) | x <= fromIntegral(s* baseSize) = True -- if distance is smaller than the size of asteroid it intersects
+                           | otherwise = doesCollide xs
 
 handleCollision :: GameState -> GameState
 handleCollision gstate@(GameState _ p1 p2 astrs _ _ _) = loseLife (collisionWith astrs [] Nothing)
