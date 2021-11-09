@@ -8,9 +8,19 @@ import Model
 import Constants ( baseSize, (<?) )
 import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV)
 import Graphics.Gloss.Geometry.Angle (degToRad)
+import Data.List(sortBy)
+import qualified Data.Aeson as Ae
+
+instance Ae.ToJSON ScoreEntry where
+    toEncoding = Ae.genericToEncoding Ae.defaultOptions
+
+instance Ae.FromJSON ScoreEntry
+
+
 
 view :: GameState -> IO Picture
-view = return . viewPure
+view (GameState Leaderboard _ _ _ _ _ _ ) = showLeaderboard
+view g = return $ viewPure g
 
 viewPure :: GameState -> Picture
 viewPure gstate = case currentState gstate of -- temp indications for states
@@ -50,3 +60,21 @@ drawAsteroids (GameState _ _ _ [] _ _ _) = [blank]
 drawAsteroids (GameState _ _ _ astr _ _ _) = map drawAsteroid astr
   where
     drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle  (fromIntegral (siz * baseSize))
+
+
+getScore :: GameMode -> IO [ScoreEntry]
+getScore m = list <$> mlist m
+  where mlist SinglePlayer = Ae.decodeFileStrict "SingleBoard.json"
+        mlist Coop = Ae.decodeFileStrict "CoopBoard.json"
+        list (Just a) = a
+        list Nothing = []
+
+
+showLeaderboard :: IO Picture
+showLeaderboard =  drawBoard 200 <$> board (lSort <$> getScore SinglePlayer)
+  where lSort = sortBy (\(ScoreEntry _ a) (ScoreEntry _ b) -> compare b a)
+        board l = fmap (foldr addEntry [] ) l  
+        addEntry (ScoreEntry n s) list = ("Name: " ++ n ++ "Score: " ++ show s ): list
+        drawBoard :: Float -> [String] -> Picture
+        drawBoard i [] = translate (-600) i $ color green (text "~~~~~~~~~~~~~~~~")
+        drawBoard i (p:ps) = pictures[translate (-600) i ( color green (text p)) , drawBoard (i-100) ps]

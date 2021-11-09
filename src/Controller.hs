@@ -10,7 +10,10 @@ import Model
       GameState(GameState, asteroids, keys, currentState, player1, player2, playerName),
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir )
-import View ( playerPath)
+import View(playerPath, getScore)
+
+import qualified Data.Aeson as Ae
+
 
 import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
@@ -30,7 +33,6 @@ import System.Exit (exitSuccess)
 import Graphics.Gloss.Geometry.Line(closestPointOnLine)
 import Graphics.Gloss.Data.Vector (dotV, angleVV, argV)
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
-import qualified Data.Aeson as Ae
 import qualified Data.ByteString.Lazy as B
 
 
@@ -63,19 +65,10 @@ handleExit :: Event -> GameState -> IO GameState --closes the program when press
 handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ ) = exitSuccess
 handleExit _ gstate = return gstate
 
-instance Ae.ToJSON ScoreEntry where
-    toEncoding = Ae.genericToEncoding Ae.defaultOptions
-
-instance Ae.FromJSON ScoreEntry
 
 
 
-getScore :: GameMode -> IO [ScoreEntry]
-getScore m = fmap list $ mlist m
-  where mlist SinglePlayer = Ae.decodeFileStrict "SingleBoard.json"
-        mlist Coop = Ae.decodeFileStrict "CoopBoard.json"
-        list (Just a) = a
-        list Nothing = []
+
 
 insertScore :: GameState -> IO ()
 insertScore g | time (player2 g) == 0 =   (getScore SinglePlayer) >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
