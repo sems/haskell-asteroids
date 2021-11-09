@@ -7,7 +7,7 @@ import Model
       Asteroid(Asteroid),
       ScoreEntry(ScoreEntry, name, score),
       GameMode(Coop, SinglePlayer),
-      GameState(GameState, asteroids, keys, currentState, player1, player2, playerName),
+      GameState(GameState, asteroids, keys, currentState, player1, player2, playerName, collision),
       Player(Player, playerPos, time, lives),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir )
 import View(playerPath, getScore)
@@ -39,13 +39,13 @@ import Movement (moveAsteroids, movePlayer)
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate@(GameState Playing (Player 0 _ _ _) (Player 0 _ _ _) _ _ _ _) = insertScore gstate >> return gstate{currentState = GameOver}
-step secs gstate@(GameState Playing _ _ _ _ _ _) = log' $ spawnAsteroid $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
+step secs gstate@(GameState Playing (Player 0 _ _ _) (Player 0 _ _ _) _ _ _ _ _) = insertScore gstate >> return gstate{currentState = GameOver}
+step secs gstate@(GameState Playing _ _ _ _ _ _ _) = log' $ spawnAsteroid $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
 step _ gstate = return gstate
 
 log' :: IO GameState -> IO GameState
 log' gstate = do
-  gstate'@(GameState _ p1 p2 _ _ _ _) <- gstate
+  gstate'@(GameState _ p1 p2 _ _ _ _ col) <- gstate
   -- putStr "x:"
   -- putStr $ show $ getX p1
   -- putStr " y:"
@@ -53,17 +53,16 @@ log' gstate = do
   -- print (argV (-1,-1))
   gstate
   where
-    getX :: Player -> Float
     getX p@(Player _ pos dir@(x,y) _) = x
     getY p@(Player _ pos dir@(x,y) _) = y
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
-input e gstate@(GameState GetName _ _ _ _ _ _) = return $ getName e gstate
+input e gstate@(GameState GetName _ _ _ _ _ _ _) = return $ getName e gstate
 input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
 
 handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
-handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ ) = exitSuccess
+handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = exitSuccess
 handleExit _ gstate = return gstate
 
 insertScore :: GameState -> IO ()
@@ -82,29 +81,29 @@ getName _ g = g
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
-testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
-testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
+testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
+testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
 testEvent _ g = g
 
 stateFlow :: Event -> GameState -> GameState -- flow between different  states (eventKey will probably be replaced with mouseinput)
-stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = initialState {currentState = GetName}  -- new game
-stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = gstate {currentState = Playing}      -- continue game
-stateFlow (EventKey (Char '1') _ _ _) gstate@(GameState Choose _ _ _ _ _ _) = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}} -- singeplayer
-stateFlow (EventKey (Char '2') _ _ _) gstate@(GameState Choose _ _ _ _ _ _) = gstate {currentState = Playing } -- coop
-stateFlow (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Playing _ _ _ _ _ _) = gstate {currentState = Pause} --pause game
-stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Pause _ _ _ _ _ _) = gstate {currentState = Playing} -- contine game
-stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Pause _ _ _ _ _ _) = gstate {currentState = Main}  -- back to main menu (without losing progress)
-stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _ _) = gstate {currentState = Leaderboard} -- view leaderboard
-stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
-stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _ _) = initialState{currentState = Leaderboard}
-stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _ _) = initialState
+stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = initialState {currentState = GetName}  -- new game
+stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = gstate {currentState = Playing}      -- continue game
+stateFlow (EventKey (Char '1') _ _ _) gstate@(GameState Choose _ _ _ _ _ _ _) = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}} -- singeplayer
+stateFlow (EventKey (Char '2') _ _ _) gstate@(GameState Choose _ _ _ _ _ _ _) = gstate {currentState = Playing } -- coop
+stateFlow (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Playing _ _ _ _ _ _ _) = gstate {currentState = Pause} --pause game
+stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Pause _ _ _ _ _ _ _) = gstate {currentState = Playing} -- contine game
+stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Pause _ _ _ _ _ _ _) = gstate {currentState = Main}  -- back to main menu (without losing progress)
+stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = gstate {currentState = Leaderboard} -- view leaderboard
+stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState Leaderboard _ _ _ _ _ _ _) = gstate {currentState = Main} -- back to main menu 
+stateFlow (EventKey (Char 'l') _ _ _) gstate@(GameState GameOver _ _ _ _ _ _ _) = initialState{currentState = Leaderboard}
+stateFlow (EventKey (Char 'm') _ _ _) gstate@(GameState GameOver _ _ _ _ _ _ _) = initialState
 stateFlow _ gstate = gstate
 
 
 handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
-handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
+handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
 handleTime _ gstate = gstate
 
 
@@ -114,12 +113,12 @@ handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate
 handleInput _ world = world -- Ignore non-keypresses for simplicity
 
 gameTime :: GameState -> Int
-gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _ _) = round time
-gameTime (GameState Playing (Player _ _ _ time) _ _ _ _ _) = round time
+gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _ _ _) = round time
+gameTime (GameState Playing (Player _ _ _ time) _ _ _ _ _ _) = round time
 gameTime _ = 0
 
 spawnAsteroid :: GameState -> IO GameState
-spawnAsteroid gstate@(GameState _ _ _ astr _ _ _) = do
+spawnAsteroid gstate@(GameState _ _ _ astr _ _ _ _) = do
   let time = gameTime gstate
   newAstr <- newAsteroid
   if time `mod` 5 == 0 then return $ gstate{asteroids = astr ++ [newAstr] } else return gstate
@@ -153,15 +152,18 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = doesCollide $ map (getdistance 
                            | otherwise = doesCollide xs
 
 handleCollision :: GameState -> GameState
-handleCollision gstate@(GameState _ p1 p2 astrs _ _ _) = loseLife (collisionWith astrs [] Nothing)
+handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collisionWith astrs [] Nothing)
   where 
-    collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> ([Asteroid], Maybe Player)
-    collisionWith [] ys may = (ys, may)
-    collisionWith (x:xs) ys may | checkCollision x p1 = (xs ++ ys, Just p1)
-                                | checkCollision x p2 = (xs ++ ys, Just p2)
+    collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> (Maybe Asteroid, [Asteroid], Maybe Player)
+    collisionWith [] ys may = (Nothing, ys, may)
+    collisionWith (x:xs) ys may | checkCollision x p1 = (Just x, xs ++ ys, Just p1)
+                                | checkCollision x p2 = (Just x, xs ++ ys, Just p2)
                                 | otherwise = collisionWith xs (x:ys) may
-    loseLife :: ([Asteroid], Maybe Player) -> GameState
-    loseLife (as, may)  | may == Just p1 = gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as}
-                        | may == Just p2 = gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as}
-                        | otherwise = gstate
+    loseLife :: (Maybe Asteroid, [Asteroid], Maybe Player) -> GameState
+    loseLife (colAs, as, may) = case colAs of
+      Nothing -> gstate
+      Just colAsteroid@(Asteroid pos _ _ _) -> case may of 
+        Nothing -> gstate
+        Just player | player == p1 -> gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as, collision = (pos, 1.0) : col}
+                    | player == p2 -> gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as, collision = (pos, 1.0) : col}
 

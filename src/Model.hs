@@ -2,11 +2,10 @@
 -- | This module contains the data types
 --   which represent the state of the game
 module Model where
-import System.Random
-import Data.Set
+
 import qualified Data.Set as S
 import Graphics.Gloss.Interface.IO.Interact (Key)
-import GHC.Generics
+import GHC.Generics ( Generic )
 
 data InfoToShow = ShowNothing
                 | ShowANumber Int
@@ -18,6 +17,7 @@ type Lives     = Int
 type Size      = Int
 type Speed     = Float 
 type Score     = Int
+type Time      = Float
 
 data GameState = GameState {
   currentState :: State,
@@ -26,14 +26,15 @@ data GameState = GameState {
   asteroids    :: [Asteroid],
   bullets      :: [Bullet],
   keys         :: S.Set Key,
-  playerName   :: String
+  playerName   :: String,
+  collision    :: [(Position, Time)]
 }
 
 data Player = Player {
   lives      :: Lives, 
   playerPos  :: Position,
   playerDir  :: Direction,
-  time       :: Float 
+  time       :: Time 
 }
   deriving Eq
 
@@ -74,4 +75,4 @@ initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
-initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty ""
+initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty "" []
