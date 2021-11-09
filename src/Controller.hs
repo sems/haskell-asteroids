@@ -152,12 +152,15 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map (getdistance . getc
                      | otherwise = thing xs
 
 handleCollision :: GameState -> GameState
-handleCollision gstate@(GameState _ p1 p2 astrs _ _ _) = otherthing (thing astrs [] Nothing)
-  where thing [] ys may = (ys, may)
-        thing (x:xs) ys may | checkCollision x p1 = (xs ++ ys, Just p1)
-                            | checkCollision x p2 = (xs ++ ys, Just p2)
-                            | otherwise = thing xs (x:ys) may
-        otherthing (as, may) | may == Just p1 = gstate{player1 = p1{lives = lives p1 - 1},asteroids = as} -- sometimes I just don't know what to call functions okey (especially when I don't have the energy to think too much about it (might change later))
-                             | may == Just p2 = gstate{player2 = p2{lives = lives p2 - 1},asteroids = as}
-                             | otherwise = gstate
+handleCollision gstate@(GameState _ p1 p2 astrs _ _ _) = loseLife (collisionWith astrs [] Nothing)
+  where 
+    collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> ([Asteroid], Maybe Player)
+    collisionWith [] ys may = (ys, may)
+    collisionWith (x:xs) ys may | checkCollision x p1 = (xs ++ ys, Just p1)
+                                | checkCollision x p2 = (xs ++ ys, Just p2)
+                                | otherwise = collisionWith xs (x:ys) may
+    loseLife :: ([Asteroid], Maybe Player) -> GameState
+    loseLife (as, may)  | may == Just p1 = gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as}
+                        | may == Just p2 = gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as}
+                        | otherwise = gstate
 
