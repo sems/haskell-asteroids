@@ -16,8 +16,6 @@ instance Ae.ToJSON ScoreEntry where
 
 instance Ae.FromJSON ScoreEntry
 
-
-
 view :: GameState -> IO Picture
 view (GameState Leaderboard _ _ _ _ _ _ ) = showLeaderboard
 view g = return $ viewPure g
@@ -61,14 +59,12 @@ drawAsteroids (GameState _ _ _ astr _ _ _) = map drawAsteroid astr
   where
     drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle  (fromIntegral (siz * baseSize))
 
-
 getScore :: GameMode -> IO [ScoreEntry]
 getScore m = list <$> mlist m
   where mlist SinglePlayer = Ae.decodeFileStrict "SingleBoard.json"
         mlist Coop = Ae.decodeFileStrict "CoopBoard.json"
         list (Just a) = a
         list Nothing = []
-
 
 showLeaderboard :: IO Picture
 showLeaderboard =  drawBoard 200 <$> board (lSort <$> getScore SinglePlayer)

@@ -65,11 +65,6 @@ handleExit :: Event -> GameState -> IO GameState --closes the program when press
 handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ ) = exitSuccess
 handleExit _ gstate = return gstate
 
-
-
-
-
-
 insertScore :: GameState -> IO ()
 insertScore g | time (player2 g) == 0 =   (getScore SinglePlayer) >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
               | otherwise = (getScore Coop) >>= B.writeFile "CoopBoard.json" . Ae.encode  .(entry :)
