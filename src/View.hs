@@ -69,7 +69,7 @@ getScore m = list <$> mlist m
 showLeaderboard :: IO Picture
 showLeaderboard =  drawBoard 200 <$> board (lSort <$> getScore SinglePlayer)
   where lSort = sortBy (\(ScoreEntry _ a) (ScoreEntry _ b) -> compare b a)
-        board l = fmap (foldr addEntry [] ) l  
+        board = fmap (foldr addEntry [] ) 
         addEntry (ScoreEntry n s) list = ("Name: " ++ n ++ "Score: " ++ show s ): list
         drawBoard :: Float -> [String] -> Picture
         drawBoard i [] = translate (-600) i $ color green (text "~~~~~~~~~~~~~~~~")

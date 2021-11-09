@@ -66,18 +66,18 @@ handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ 
 handleExit _ gstate = return gstate
 
 insertScore :: GameState -> IO ()
-insertScore g | time (player2 g) == 0 =   (getScore SinglePlayer) >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
-              | otherwise = (getScore Coop) >>= B.writeFile "CoopBoard.json" . Ae.encode  .(entry :)
+insertScore g | time (player2 g) == 0 =   getScore SinglePlayer >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
+              | otherwise = getScore Coop >>= B.writeFile "CoopBoard.json" . Ae.encode  .(entry :)
   where entry =  ScoreEntry (playerName g) newScore
         newScore = round ( time (player2 g) + time (player1 g))
-        
+
 
 getName :: Event -> GameState -> GameState
 getName (EventKey (SpecialKey KeyEnter) _ _ _) g = g{currentState = Choose}
 getName (EventKey (SpecialKey KeyLeft) Down _ _) g | playerName g == "" = g
                                                    | otherwise = g{playerName = take (length (playerName g) - 1) (playerName g) }
-getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}          
-getName _ g = g                                       
+getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}
+getName _ g = g
 
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
@@ -216,7 +216,7 @@ moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos 
 --collision stuff
 checkCollision :: Asteroid -> Player -> Bool
 checkCollision _ (Player 0 _ _ _) = False
-checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (getclosest pos) $ getsegments $ playerPath pl
+checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map (getdistance . getclosest pos) (getsegments $ playerPath pl)
   where getsegments[x,y,z] = [(x,y),(y,z),(x,z)]  -- distibute path into line segments
         getclosest p (x,y) | dotV xy yp > 0 = y    -- get from each line segemnt the closest point to mid asteroid (here x,y aree two points and not coordinates)
                            | dotV xy xp < 0 = x       --
@@ -232,8 +232,8 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = thing $ map getdistance $ map (
 handleCollision :: GameState -> GameState
 handleCollision gstate@(GameState _ p1 p2 astrs _ _ _) = otherthing (thing astrs [] Nothing)
   where thing [] ys may = (ys, may)
-        thing (x:xs) ys may | checkCollision x p1 = ((xs ++ ys), Just p1)
-                            | checkCollision x p2 = ((xs ++ ys), Just p2)
+        thing (x:xs) ys may | checkCollision x p1 = (xs ++ ys, Just p1)
+                            | checkCollision x p2 = (xs ++ ys, Just p2)
                             | otherwise = thing xs (x:ys) may
         otherthing (as, may) | may == Just p1 = gstate{player1 = p1{lives = lives p1 - 1},asteroids = as} -- sometimes I just don't know what to call functions okey (especially when I don't have the energy to think too much about it (might change later))
                              | may == Just p2 = gstate{player2 = p2{lives = lives p2 - 1},asteroids = as}
