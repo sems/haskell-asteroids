@@ -167,18 +167,16 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = doesCollide $ map (getdistance 
 handleCollision :: GameState -> GameState
 handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collisionWith astrs [] Nothing)
   where
-    collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> (Maybe Asteroid, [Asteroid], Maybe Player)
-    collisionWith [] ys may = (Nothing, ys, may)
-    collisionWith (x:xs) ys may | checkCollision x p1 = (Just x, xs ++ ys, Just p1)
-                                | checkCollision x p2 = (Just x, xs ++ ys, Just p2)
+    collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> ([Asteroid], Maybe (Player, Asteroid))
+    collisionWith [] ys may = (ys, Nothing)
+    collisionWith (x:xs) ys may | checkCollision x p1 = (xs ++ ys, Just (p1, x))
+                                | checkCollision x p2 = (xs ++ ys, Just (p2, x))
                                 | otherwise = collisionWith xs (x:ys) may
-    loseLife :: (Maybe Asteroid, [Asteroid], Maybe Player) -> GameState
-    loseLife (colAs, as, may) = case colAs of
+    loseLife :: ([Asteroid], Maybe (Player, Asteroid)) -> GameState
+    loseLife (as, may) = case may of
       Nothing -> gstate
-      Just colAsteroid@(Asteroid pos _ _ _) -> case may of
-        Nothing -> gstate
-        Just player | player == p1 -> gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as, collision = (pos, 1.0) : col}
-                    | player == p2 -> gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as, collision = (pos, 1.0) : col}
+      Just (player, astr@(Asteroid pos _ _ _)) | player == p1 -> gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as, collision = (pos, 1.0) : col}
+                                               | player == p2 -> gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as, collision = (pos, 1.0) : col}
 
 -- Calculates the duration of each animation left
 handleCollision' :: Time -> GameState -> GameState
