@@ -5,7 +5,7 @@ module View where
 
 import Graphics.Gloss
 import Model
-import Constants ( baseSize, (<?) )
+import Constants ( baseSize, (<?), eS )
 import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV)
 import Graphics.Gloss.Geometry.Angle (degToRad)
 import Data.List(sortBy)
@@ -24,7 +24,7 @@ view g = return $ viewPure g
 viewPure :: GameState -> Picture
 viewPure gstate = case currentState gstate of -- temp indications for states
   Main        -> color green (text "Main")
-  Playing     -> pictures (drawPlaying gstate ++ drawAsteroids gstate)
+  Playing     -> pictures (drawExplosions gstate ++ drawPlaying gstate ++ drawAsteroids gstate)
   GameOver    -> pictures $ drawGameOver gstate
   Pause       -> color green (text "Pause")
   Leaderboard -> color green (text "Leaderboard")
@@ -59,6 +59,13 @@ drawAsteroids (GameState _ _ _ [] _ _ _ _) = [blank]
 drawAsteroids (GameState _ _ _ astr _ _ _ _) = map drawAsteroid astr
   where
     drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle  (fromIntegral (siz * baseSize))
+
+drawExplosions :: GameState -> [Picture] 
+drawExplosions (GameState _ _ _ _ _ _ _ []) = [blank]
+drawExplosions gstate@(GameState _ _ _ _ _ _ _ (col@((x,y), time):cols)) = explosion x y : drawExplosions gstate{collision = cols}
+  where 
+    explosion x y = translate x y $ color explosionColor $ thickCircle (eS * snd col) 2 
+    explosionColor = makeColor 251 251 251 ((time + 1) / 2)
 
 getScore :: GameMode -> IO [ScoreEntry]
 getScore m = list <$> mlist m

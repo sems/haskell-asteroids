@@ -2,7 +2,7 @@ module Constants where
 
 --playerspeed 
 pS:: Float 
-pS = 50
+pS = 75
 
 --directionSpeed
 dS :: Float
@@ -11,6 +11,10 @@ dS = 10
 --asteroidspeed
 aS :: Float 
 aS = 500
+
+-- explosionSize
+eS :: Float
+eS = 20.0
 
 baseSize :: Int --basesize of asteroid
 baseSize = 5

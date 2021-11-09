@@ -9,7 +9,7 @@ import Model
       GameMode(Coop, SinglePlayer),
       GameState(GameState, asteroids, keys, currentState, player1, player2, playerName, collision),
       Player(Player, playerPos, time, lives),
-      State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir )
+      State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir, Time, Position )
 import View(playerPath, getScore)
 
 import qualified Data.Aeson as Ae
@@ -40,7 +40,7 @@ import Movement (moveAsteroids, movePlayer)
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate@(GameState Playing (Player 0 _ _ _) (Player 0 _ _ _) _ _ _ _ _) = insertScore gstate >> return gstate{currentState = GameOver}
-step secs gstate@(GameState Playing _ _ _ _ _ _ _) = log' $ spawnAsteroid $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs gstate
+step secs gstate@(GameState Playing _ _ _ _ _ _ _) = log' $ spawnAsteroid $ handleCollision  $ handleTime secs $ movePlayer secs $ moveAsteroids secs $ handleCollision' secs gstate
 step _ gstate = return gstate
 
 log' :: IO GameState -> IO GameState
@@ -153,7 +153,7 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = doesCollide $ map (getdistance 
 
 handleCollision :: GameState -> GameState
 handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collisionWith astrs [] Nothing)
-  where 
+  where
     collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> (Maybe Asteroid, [Asteroid], Maybe Player)
     collisionWith [] ys may = (Nothing, ys, may)
     collisionWith (x:xs) ys may | checkCollision x p1 = (Just x, xs ++ ys, Just p1)
@@ -162,8 +162,16 @@ handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collision
     loseLife :: (Maybe Asteroid, [Asteroid], Maybe Player) -> GameState
     loseLife (colAs, as, may) = case colAs of
       Nothing -> gstate
-      Just colAsteroid@(Asteroid pos _ _ _) -> case may of 
+      Just colAsteroid@(Asteroid pos _ _ _) -> case may of
         Nothing -> gstate
         Just player | player == p1 -> gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as, collision = (pos, 1.0) : col}
                     | player == p2 -> gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as, collision = (pos, 1.0) : col}
 
+handleCollision' :: Time -> GameState -> GameState
+handleCollision' secs gstate@(GameState _ _ _ _ _ _ _ cols) = gstate{collision = collision'} 
+  where
+    collision' :: [(Position, Time)]
+    collision' = map f cols
+      where
+        f :: (Position, Time) -> (Position, Time)
+        f (pos, time) = (pos, time - secs)
