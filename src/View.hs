@@ -76,6 +76,7 @@ drawExplosions gstate@(GameState _ _ _ _ _ _ _ (col@((x,y), time):cols)) = explo
     explosion x y = translate x y $ color explosionColor $ thickCircle (eS * snd col) 2
     -- The color needs to be calculated individually since it can be faded out in this way.
     explosionColor = makeColor 251 251 251 ((time + 1) / 2)
+
 drawBullets :: GameState -> Picture
 drawBullets gstate = pictures $ map draw  $ bullets gstate
   where draw b = color white $ line $ bulletPath b
@@ -93,7 +94,7 @@ getScore m = list <$> mlist m
 showLeaderboard :: GameMode -> Float -> IO Picture
 showLeaderboard g f =  drawBoard 300 <$> board (lSort <$> getScore g)
   where lSort = sortBy (\(ScoreEntry _ a) (ScoreEntry _ b) -> compare b a)
-        board l = fmap (foldl addEntry [title g] ) l  
+        board = fmap (foldl addEntry [title g] ) 
         addEntry list (ScoreEntry n s)  = list ++ ["Name:" ++ n ++ " Score:" ++ show s  ]
         drawBoard i [] = translate f i $ scale 0.45 0.45 $ color green (text "~~~~~~~~~~~~~~~~~~")
         drawBoard i (p:ps) = pictures[translate f i (  scale 0.45 0.45 $ color green (text p)) , drawBoard (i-70) ps]
