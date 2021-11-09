@@ -18,3 +18,6 @@ baseSize = 5
 -- inRange Function
 (<?) :: Ord a => a -> (a,a) -> Bool
 (<?) x (min, max) = x >= min && x <= max
+
+data MoveDirection = UpDir | DownDir | LeftDir | RightDir
+  deriving Eq

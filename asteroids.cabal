@@ -1,6 +1,6 @@
 name:                asteroids
 version:             0.1.0.0
-author:              Alejandro Serrano
+author:              Amber Bosman & Sem Spanhaak
 maintainer:          A.SerranoMena@uu.nl
 category:            Game
 build-type:          Simple
@@ -20,4 +20,5 @@ executable asteroids
                      , Model
                      , View
                      , Constants
+                     , Movement
   default-language:    Haskell2010
