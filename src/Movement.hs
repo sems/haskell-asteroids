@@ -28,7 +28,7 @@ moveBullets secs gstate = gstate{bullets = bullets'}
   where bullets' = map (moveBullets' secs) $ bullets gstate
 
 moveBullets' :: Float -> Bullet -> Bullet
-moveBullets' secs b = Bullet (bulletPos b A.+ bulletDir b) (bulletDir b)
+moveBullets' secs b = Bullet (bulletPos b A.+ mulSV (secs * pS * 3) (bulletDir b) ) (bulletDir b)
 
 
 movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
