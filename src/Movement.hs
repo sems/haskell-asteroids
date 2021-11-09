@@ -5,10 +5,13 @@ import Constants ( MoveDirection(..), pS, dS, aS, (<?) )
 import Model
     ( Asteroid(Asteroid, asteriodPos),
       Player(Player, playerDir, playerPos),
-      GameState(player2, player1, keys, asteroids),
-      Direction )
+      GameState(player2, player1, keys, asteroids, bullets),
+      Direction,
+       Bullet(Bullet, bulletPos, bulletDir))
 import qualified Data.Set as S
 import Graphics.Gloss.Interface.IO.Game (Key (Char, SpecialKey), SpecialKey (KeyDown, KeyLeft, KeyUp, KeyRight))
+import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((*),(+))
+import Graphics.Gloss.Data.Vector ( mulSV )
 
 moveAsteroids :: Float -> GameState -> GameState
 moveAsteroids secs gstate = gstate { asteroids = asteroids' }
@@ -19,6 +22,14 @@ moveAsteroids secs gstate = gstate { asteroids = asteroids' }
 moveAsteroid' :: Float -> Asteroid -> Asteroid
 moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos - speed, yPos)}
   where speed = (secs * aS) * (10 * (sp / 100))
+
+moveBullets :: Float -> GameState -> GameState
+moveBullets secs gstate = gstate{bullets = bullets'}
+  where bullets' = map (moveBullets' secs) $ bullets gstate
+
+moveBullets' :: Float -> Bullet -> Bullet
+moveBullets' secs b = Bullet (bulletPos b A.+ bulletDir b) (bulletDir b)
+
 
 movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
 movePlayer secs gstate = move secs strokes gstate
@@ -31,6 +42,7 @@ movePlayer secs gstate = move secs strokes gstate
         ex = movePlayer' secs s gst -- excecution of a single move
     strokes :: [Key]
     strokes = S.toList $ keys gstate
+
 
 -- movement
 movePlayer' :: Float ->  Key -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 

@@ -7,9 +7,10 @@ import Model
       Asteroid(Asteroid),
       ScoreEntry(ScoreEntry, name, score),
       GameMode(Coop, SinglePlayer),
-      GameState(GameState, asteroids, keys, currentState, player1, player2, playerName, collision),
+      GameState(GameState, asteroids, keys, currentState, player1, player2, bullets, playerName,collision),
       Player(Player, playerPos, time, lives),
-      State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir, Time, Position )
+      Bullet(Bullet, bulletPos, bulletDir),
+      State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir , Time, Position)
 import View(playerPath, getScore)
 
 import qualified Data.Aeson as Ae
@@ -60,11 +61,19 @@ log' gstate = do
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
 input e gstate@(GameState GetName _ _ _ _ _ _ _) = return $ getName e gstate
-input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput]
+input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput, handleShot]
+
+
+handleShot :: Event -> GameState -> GameState
+handleShot (EventKey (SpecialKey KeyEnter) Down _ _ ) g@(GameState Playing p _ _ _ _ _ _ ) = g{bullets = newBull : bullets g}
+  where newBull = Bullet (playerPos p) (playerDir p)
+handleShot _ g = g 
+
 
 handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
 handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = exitSuccess
 handleExit _ gstate = return gstate
+
 
 insertScore :: GameState -> IO ()
 insertScore g | time (player2 g) == 0 =   getScore SinglePlayer >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
@@ -80,14 +89,16 @@ getName (EventKey (SpecialKey KeyLeft) Down _ _) g | playerName g == "" = g
 getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}
 getName _ g = g
 
+
 -- force certain states within the game in order to test specific functions
 testEvent :: Event -> GameState -> GameState
 testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
 testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
 testEvent _ g = g
 
+
 stateFlow :: Event -> GameState -> GameState -- flow between different  states (eventKey will probably be replaced with mouseinput)
-stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = initialState {currentState = GetName}  -- new game
+stateFlow (EventKey (Char 'n') _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = initialState {currentState = GetName, playerName = ""}  -- new game
 stateFlow (EventKey (Char 'c') _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = gstate {currentState = Playing}      -- continue game
 stateFlow (EventKey (Char '1') _ _ _) gstate@(GameState Choose _ _ _ _ _ _ _) = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}} -- singeplayer
 stateFlow (EventKey (Char '2') _ _ _) gstate@(GameState Choose _ _ _ _ _ _ _) = gstate {currentState = Playing } -- coop
@@ -151,6 +162,7 @@ checkCollision (Asteroid pos@(ax,ay) _ s _) pl = doesCollide $ map (getdistance 
         doesCollide [] = False
         doesCollide (x:xs) | x <= fromIntegral(s* baseSize) = True -- if distance is smaller than the size of asteroid it intersects
                            | otherwise = doesCollide xs
+
 
 handleCollision :: GameState -> GameState
 handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collisionWith astrs [] Nothing)

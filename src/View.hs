@@ -10,10 +10,12 @@ import Model
             Leaderboard),
       ScoreEntry(ScoreEntry),
       Asteroid(Asteroid),
-      GameState(GameState, collision, playerName, currentState),
-      Player(Player) )
+      GameState(GameState, collision, playerName, currentState, bullets),
+      Player(Player),
+      Bullet(Bullet, bulletPos, bulletDir) )
 import Constants ( baseSize, (<?), eS )
-import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV)
+import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV, mulSV )
+import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((+))
 import Graphics.Gloss.Geometry.Angle (degToRad)
 import Data.List(sortBy)
 import qualified Data.Aeson as Ae
@@ -24,7 +26,7 @@ instance Ae.ToJSON ScoreEntry where
 instance Ae.FromJSON ScoreEntry
 
 view :: GameState -> IO Picture
-view (GameState Leaderboard _ _ _ _ _ _ _) = showLeaderboard
+view (GameState Leaderboard _ _ _ _ _ _ _) = mconcat [showLeaderboard SinglePlayer (-740), showLeaderboard Coop 0]
 view g = return $ viewPure g
 
 viewPure :: GameState -> Picture
@@ -45,7 +47,7 @@ drawGameOver gstate@(GameState _ (Player _ _ _ time1) (Player _ _ _ time2) _ _ _
                | otherwise = Coop
 
 drawPlaying :: GameState -> [Picture]
-drawPlaying gstate@(GameState _ p1 p2 _ _ _ _ _)  =  drawScore (-490,150) p1 : drawScore (0,150) p2 : drawPlayers gstate
+drawPlaying gstate@(GameState _ p1 p2 _ _ _ _ _)  = drawBullets gstate : drawScore (-490,150) p1 : drawScore (0,150) p2 : drawPlayers gstate
   where drawScore _ (Player _ _ _ 0) = blank
         drawScore (x,y) (Player lives _ _ time) = translate x y $ color white $ text ("l:" ++ show lives ++ " s:" ++ show (round time))
 
@@ -74,6 +76,12 @@ drawExplosions gstate@(GameState _ _ _ _ _ _ _ (col@((x,y), time):cols)) = explo
     explosion x y = translate x y $ color explosionColor $ thickCircle (eS * snd col) 2
     -- The color needs to be calculated individually since it can be faded out in this way.
     explosionColor = makeColor 251 251 251 ((time + 1) / 2)
+drawBullets :: GameState -> Picture
+drawBullets gstate = pictures $ map draw  $ bullets gstate
+  where draw b = color white $ line $ bulletPath b
+
+bulletPath :: Bullet -> Path
+bulletPath b = [bulletPos b, bulletPos b A.+ mulSV 10 (bulletDir b)]
 
 getScore :: GameMode -> IO [ScoreEntry]
 getScore m = list <$> mlist m
@@ -82,11 +90,12 @@ getScore m = list <$> mlist m
         list (Just a) = a
         list Nothing = []
 
-showLeaderboard :: IO Picture
-showLeaderboard =  drawBoard 200 <$> board (lSort <$> getScore SinglePlayer)
+showLeaderboard :: GameMode -> Float -> IO Picture
+showLeaderboard g f =  drawBoard 300 <$> board (lSort <$> getScore g)
   where lSort = sortBy (\(ScoreEntry _ a) (ScoreEntry _ b) -> compare b a)
-        board = fmap (foldr addEntry [] )
-        addEntry (ScoreEntry n s) list = ("Name: " ++ n ++ "Score: " ++ show s ): list
-        drawBoard :: Float -> [String] -> Picture
-        drawBoard i [] = translate (-600) i $ color green (text "~~~~~~~~~~~~~~~~")
-        drawBoard i (p:ps) = pictures[translate (-600) i ( color green (text p)) , drawBoard (i-100) ps]
+        board l = fmap (foldl addEntry [title g] ) l  
+        addEntry list (ScoreEntry n s)  = list ++ ["Name:" ++ n ++ " Score:" ++ show s  ]
+        drawBoard i [] = translate f i $ scale 0.45 0.45 $ color green (text "~~~~~~~~~~~~~~~~~~")
+        drawBoard i (p:ps) = pictures[translate f i (  scale 0.45 0.45 $ color green (text p)) , drawBoard (i-70) ps]
+        title SinglePlayer = "SinglePlayer"
+        title Coop = "Coop"

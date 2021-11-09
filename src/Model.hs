@@ -7,10 +7,6 @@ import qualified Data.Set as S
 import Graphics.Gloss.Interface.IO.Interact (Key)
 import GHC.Generics ( Generic )
 
-data InfoToShow = ShowNothing
-                | ShowANumber Int
-                | ShowAChar   Char
-
 type Direction = (Float, Float)
 type Position  = (Float, Float)
 type Lives     = Int
@@ -75,4 +71,4 @@ initialAsteroid :: Asteroid
 initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
-initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty "" []
+initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty "Nameless" []
