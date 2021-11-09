@@ -35,6 +35,7 @@ import Graphics.Gloss.Data.Vector (dotV, angleVV, argV)
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
 import qualified Data.ByteString.Lazy as B
 import Movement (moveAsteroids, movePlayer)
+import Data.Aeson.Types (Value(Bool))
 
 
 -- | Handle one iteration of the game
@@ -167,11 +168,16 @@ handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collision
         Just player | player == p1 -> gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as, collision = (pos, 1.0) : col}
                     | player == p2 -> gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as, collision = (pos, 1.0) : col}
 
+-- Calculates the duration of each animation left
 handleCollision' :: Time -> GameState -> GameState
 handleCollision' secs gstate@(GameState _ _ _ _ _ _ _ cols) = gstate{collision = collision'} 
   where
+    -- First maps the current time over the whole list of currect collisions/animations
+    -- Then it will filters all out which animations are finished, to be on the safeside -2 seconds.
     collision' :: [(Position, Time)]
-    collision' = map f cols
+    collision' = filter ff $ map mf cols 
       where
-        f :: (Position, Time) -> (Position, Time)
-        f (pos, time) = (pos, time - secs)
+        mf :: (Position, Time) -> (Position, Time)
+        mf (pos, time) = (pos, time - secs)
+        ff :: (Position, Time) -> Bool
+        ff (pos, time) = time >= -2

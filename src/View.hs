@@ -5,12 +5,18 @@ module View where
 
 import Graphics.Gloss
 import Model
+    ( GameMode(..),
+      State(GetName, Choose, Pause, GameOver, Playing, Main,
+            Leaderboard),
+      ScoreEntry(ScoreEntry),
+      Asteroid(Asteroid),
+      GameState(GameState, collision, playerName, currentState),
+      Player(Player) )
 import Constants ( baseSize, (<?), eS )
 import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV)
 import Graphics.Gloss.Geometry.Angle (degToRad)
 import Data.List(sortBy)
 import qualified Data.Aeson as Ae
-import Model (Player(Player))
 
 instance Ae.ToJSON ScoreEntry where
     toEncoding = Ae.genericToEncoding Ae.defaultOptions
@@ -60,11 +66,13 @@ drawAsteroids (GameState _ _ _ astr _ _ _ _) = map drawAsteroid astr
   where
     drawAsteroid (Asteroid (x,y) dir siz sp) = translate x y $ color white $ circle  (fromIntegral (siz * baseSize))
 
-drawExplosions :: GameState -> [Picture] 
+drawExplosions :: GameState -> [Picture]
 drawExplosions (GameState _ _ _ _ _ _ _ []) = [blank]
 drawExplosions gstate@(GameState _ _ _ _ _ _ _ (col@((x,y), time):cols)) = explosion x y : drawExplosions gstate{collision = cols}
-  where 
-    explosion x y = translate x y $ color explosionColor $ thickCircle (eS * snd col) 2 
+  where
+    -- Creates a single 'boom' relative to the given location of the collision.
+    explosion x y = translate x y $ color explosionColor $ thickCircle (eS * snd col) 2
+    -- The color needs to be calculated individually since it can be faded out in this way.
     explosionColor = makeColor 251 251 251 ((time + 1) / 2)
 
 getScore :: GameMode -> IO [ScoreEntry]
