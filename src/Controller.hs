@@ -61,11 +61,15 @@ log' gstate = do
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
 input e gstate@(GameState GetName _ _ _ _ _ _ _) = return $ getName e gstate
-input e gstate = handleExit e $ foldr (\f -> f e) gstate [testEvent, stateFlow, handleInput, handleShot]
+input e gstate = handleExit e $ foldr (\f -> f e) gstate [ stateFlow, handleInput, handleShot]
 
 
 handleShot :: Event -> GameState -> GameState
-handleShot (EventKey (SpecialKey KeyEnter) Down _ _ ) g@(GameState Playing p _ _ _ _ _ _ ) = g{bullets = newBull : bullets g}
+handleShot (EventKey (Char 'm') Down _ _ ) g@(GameState Playing _ p _ _ _ _ _ ) | lives p == 0 = g
+                                                                                | otherwise =  g{bullets = newBull : bullets g}
+  where newBull = Bullet (playerPos p) (playerDir p)
+handleShot (EventKey (Char 'f') Down _ _ ) g@(GameState Playing p _ _ _ _ _ _ ) | lives p == 0 = g
+                                                                                |otherwise =  g{bullets = newBull : bullets g}
   where newBull = Bullet (playerPos p) (playerDir p)
 handleShot _ g = g 
 
@@ -89,12 +93,6 @@ getName (EventKey (SpecialKey KeyLeft) Down _ _) g | playerName g == "" = g
 getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}
 getName _ g = g
 
-
--- force certain states within the game in order to test specific functions
-testEvent :: Event -> GameState -> GameState
-testEvent (EventKey (Char 'f') _ _ _) g@(GameState Playing _ _ _ _ _ _ _) = g {player2 = (player2 g) {lives = 0}} -- kill player 2
-testEvent (EventKey (Char 'g') _ _ _) g@(GameState Playing _ _ _ _ _ _ _) = g {player1 = (player1 g) {lives = 0}} -- kill player 1
-testEvent _ g = g
 
 
 stateFlow :: Event -> GameState -> GameState -- flow between different  states (eventKey will probably be replaced with mouseinput)
