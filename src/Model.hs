@@ -31,8 +31,7 @@ data Player = Player {
   playerPos  :: Position,
   playerDir  :: Direction,
   time       :: Time 
-}
-  deriving Eq
+} deriving Eq
 
 data Bullet = Bullet {
   bulletPos  :: Position,
@@ -53,8 +52,7 @@ data Asteroid = Asteroid {
 data ScoreEntry = ScoreEntry {
   name  :: String,
   score :: Score 
-}
-  deriving Generic
+} deriving Generic
 
 data State = Main
   | Playing
@@ -66,9 +64,6 @@ data State = Main
 
 data GameMode = Coop | SinglePlayer
   deriving (Show, Eq)
-
-initialAsteroid :: Asteroid
-initialAsteroid = Asteroid (0,0) (0,0) 1 1
 
 initialState :: GameState
 initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty "Nameless" []

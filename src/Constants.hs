@@ -16,7 +16,8 @@ aS = 500
 eS :: Float
 eS = 20.0
 
-baseSize :: Int --basesize of asteroid
+--basesize of asteroid
+baseSize :: Int 
 baseSize = 5
 
 -- inRange Function
