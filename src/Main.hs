@@ -1,10 +1,11 @@
 module Main where
 
-import Controller
-import Model
-import View
+import Controller ( step, input )
+import Model ( initialState )
+import View ( view )
 
 import Graphics.Gloss.Interface.IO.Game
+    ( black, Display(FullScreen), playIO )
 
 main :: IO ()
 main = playIO FullScreen

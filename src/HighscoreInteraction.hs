@@ -7,6 +7,7 @@ import Model
   GameMode(SinglePlayer,Coop))
 
 import Graphics.Gloss.Interface.IO.Game
+    ( white, color, pictures, scale, text, translate, Picture )
 
 import Data.List(sortBy)
 import qualified Data.Aeson as A

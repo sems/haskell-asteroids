@@ -46,7 +46,6 @@ movePlayer secs gstate = move secs strokes gstate
     strokes :: [Key]
     strokes = S.toList $ keys gstate
 
-
 -- movement
 movePlayer' :: Float ->  Key -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
 movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' UpDir secs (player1 gstate) }

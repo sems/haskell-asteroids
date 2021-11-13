@@ -39,10 +39,6 @@ data Bullet = Bullet {
   bulletDir  :: Direction 
 }
 
-{-
-  Size are in the range of [1 .. 4]
-  Speed is in the range of [0.5 .. 2.0]
--}
 data Asteroid = Asteroid {
   asteriodPos  :: Position,
   asteriodDir  :: Direction,
@@ -99,6 +95,5 @@ bMainG = Button 700 (-350,-150) "Main Menu" -- go to mainmenu from gameover
 
 bMainL = Button 700 (-350,-350) "Main Menu" -- go to main menu from leaderboard
 
---
 initialState :: GameState
 initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty "Nameless" []

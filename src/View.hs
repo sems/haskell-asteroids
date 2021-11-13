@@ -17,6 +17,7 @@ import Constants (bHeight)
 import HighscoreInteraction(showLeaderboard)
 
 import Graphics.Gloss.Interface.IO.Game
+    ( white, blank, color, line, pictures, text, translate, Picture )
 
 
 view :: GameState -> IO Picture

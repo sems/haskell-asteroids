@@ -19,7 +19,7 @@ checkPlayerCollision _ (Player 0 _ _ _) = False -- if an player is death they au
 checkPlayerCollision a@(Asteroid pos@(ax,ay) _ s _) pl =   any (checkSegCollision a) (getsegments $ playerPath pl)
   where getsegments[x,y,z] = [(x,y),(y,z),(x,z)]  -- distibute path into line segments
         
-  -- check if a line intersects with an asteroids (or is inside of it) and return a bool
+-- check if a line intersects with an asteroids (or is inside of it) and return a bool
 checkSegCollision :: Asteroid -> (Position,Position) -> Bool
 checkSegCollision (Asteroid pos@(ax,ay) _ s _) seg  =  doesCollide $ getdistance $ getclosest pos seg
   where getclosest p (x,y) | dotV xy yp > 0 = y    -- get from each line segemnt the closest point to mid asteroid (here x,y aree two points and not coordinates)
@@ -41,7 +41,6 @@ handleBulletCollision gstate = checkCollision (asteroids gstate) (bullets gstate
     checkCollision (a:as) (b:bs) aRest bRest | checkSegCollision a (bPoints(bulletPath b)) = gstate{asteroids = as++aRest, bullets = bs ++ bRest,collision = (asteriodPos a,1.0):collision gstate}
                                              | otherwise = checkCollision as (b:bs) (a:aRest) bRest   --if there is a collision both asteroid and bullet will be removed and an animation will be played on the asteroid
      where bPoints [x,y] = (x,y)
-
 
 -- handle the collision between the player and asteroids
 handleCollision :: GameState -> GameState

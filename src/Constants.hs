@@ -24,5 +24,6 @@ baseSize = 5
 (<?) :: Ord a => a -> (a,a) -> Bool
 (<?) x (min, max) = x >= min && x <= max
 
+-- Height of a button 
 bHeight :: Float
-bHeight = 112; -- Height of a button 
+bHeight = 112
