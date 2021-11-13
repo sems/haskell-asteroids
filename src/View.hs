@@ -24,8 +24,9 @@ view :: GameState -> IO Picture
 view (GameState Leaderboard _ _ _ _ _ _ _) = mconcat [return(drawButton bMainL),showLeaderboard SinglePlayer (-740), showLeaderboard Coop 0]
 view g = return $ viewPure g
 
+--handles what needs to be displayed on the  screen depending on what the current state is
 viewPure :: GameState -> Picture
-viewPure gstate = case currentState gstate of -- temp indications for states
+viewPure gstate = case currentState gstate of 
   Main        -> drawMain gstate
   Playing     -> pictures (drawExplosions gstate ++ drawPlaying gstate ++ drawAsteroids gstate)
   GameOver    -> drawGameOver gstate
@@ -33,7 +34,7 @@ viewPure gstate = case currentState gstate of -- temp indications for states
   Choose      -> drawChoose
   GetName     -> drawGetName gstate
 
-
+-- for each state there is a individual function that handles it.
 drawPlaying :: GameState -> [Picture]
 drawPlaying gstate@(GameState _ p1 p2 _ _ _ _ _)  = drawBullets gstate : drawScore (-490,150) p1 : drawScore (0,150) p2 : drawPlayers gstate
   where drawScore _ (Player _ _ _ 0) = blank

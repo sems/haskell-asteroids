@@ -16,24 +16,28 @@ import Graphics.Gloss.Data.Vector ( mulSV )
 
 import qualified Data.Set as S
 
+-- updated the gamestate with the new asteroid positions
 moveAsteroids :: Float -> GameState -> GameState
 moveAsteroids secs gstate = gstate { asteroids = asteroids' }
   where
     asteroids':: [Asteroid]
     asteroids' = map (moveAsteroid' secs) $ asteroids gstate
 
+--handles the movement of an individual asteroids
 moveAsteroid' :: Float -> Asteroid -> Asteroid
 moveAsteroid' secs a@(Asteroid (xPos, yPos) dir _ sp) = a { asteriodPos = (xPos - speed, yPos)}
   where speed = (secs * aS) * (10 * (sp / 100))
 
+-- update the gamestate with the new bullet positions
 moveBullets :: Float -> GameState -> GameState
 moveBullets secs gstate = gstate{bullets = bullets'}
-  where bullets' = map (moveBullets' secs) $ bullets gstate
+  where bullets' = map (moveBullet' secs) $ bullets gstate
 
-moveBullets' :: Float -> Bullet -> Bullet
-moveBullets' secs b = Bullet (bulletPos b A.+ mulSV (secs * pS * 3) (bulletDir b) ) (bulletDir b)
+-- handles the movement of an indifidual bullet
+moveBullet' :: Float -> Bullet -> Bullet
+moveBullet' secs b = Bullet (bulletPos b A.+ mulSV (secs * pS * 3) (bulletDir b) ) (bulletDir b)
 
-
+--updates the gamestate with the new player for each key positions
 movePlayer :: Float -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
 movePlayer secs gstate = move secs strokes gstate
   where
@@ -46,7 +50,8 @@ movePlayer secs gstate = move secs strokes gstate
     strokes :: [Key]
     strokes = S.toList $ keys gstate
 
--- movement
+
+-- handles the movent of a player per individual key
 movePlayer' :: Float ->  Key -> GameState -> GameState  -- if key is in keys gstate (meaning ispressed) 
 movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' UpDir secs (player1 gstate) }
                             | key == Char 's' = gstate{ player1 = movePlayer'' DownDir secs (player1 gstate) }
@@ -58,13 +63,14 @@ movePlayer' secs key gstate | key == Char 'w' = gstate{ player1 = movePlayer'' U
                             | key == SpecialKey KeyRight = gstate{ player2 = movePlayer'' RightDir secs (player2 gstate) }
                             | otherwise = gstate
 
+-- gives  the updated player after being moved into the given direction
 movePlayer'' :: MoveDirection -> Float -> Player -> Player
 movePlayer'' UpDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos + (xDir * pS * eTime), yPos + (yDir * pS * eTime))}
 movePlayer'' DownDir eTime p@(Player _ pos@(xPos,yPos) dir@(xDir, yDir) _) = p{playerPos  = (xPos - (xDir * pS * eTime), yPos - (yDir * pS * eTime))}
-
 movePlayer'' LeftDir eTime p@(Player _ (x,y) dir _) =  p{playerDir = movePlayerDirection LeftDir eTime dir}
 movePlayer'' RightDir eTime p@(Player _ (x,y) dir _) = p{playerDir = movePlayerDirection RightDir eTime dir}
 
+--gives the updated direction of the player
 movePlayerDirection :: MoveDirection -> Float -> Direction -> Direction
 movePlayerDirection LeftDir eTime dir@(x,y) =  movePlayerDirection' LeftDir (getPlayerDirection dir) eTime dir
 movePlayerDirection RightDir eTime dir@(x,y) =  movePlayerDirection' RightDir (getPlayerDirection dir) eTime dir

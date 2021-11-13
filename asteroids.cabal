@@ -25,4 +25,5 @@ executable asteroids
                      , Buttons
                      , DrawGameObject
                      , HighscoreInteraction
+                     , GameObjects
   default-language:    Haskell2010

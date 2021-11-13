@@ -4,26 +4,22 @@ module Controller where
 
 import Model
     ( initialState,
-      Asteroid(Asteroid),
-      ScoreEntry(ScoreEntry, name, score),
-      GameMode(Coop, SinglePlayer),
-      GameState(GameState, asteroids, keys, currentState, player1, player2, bullets, playerName,collision),
+      GameState(GameState, keys, currentState, player1, player2, playerName),
       Player(Player, playerPos, time, lives),
-      Bullet(Bullet, bulletPos, bulletDir),
-      State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir , Time, Position)
+      State(Playing, Main, GetName,Choose,GameOver),
+      asteriodPos, Direction, playerDir , Time, Position)
 import Collision(handleBulletCollision, handleCollision, handleCollision')
 import Buttons(handleButtons)
 import Movement (moveAsteroids, movePlayer,moveBullets)
 import HighscoreInteraction(insertScore)
+import GameObjects( handleShot, spawnAsteroid)
 
 import Graphics.Gloss.Interface.IO.Game
     ( Key(SpecialKey, Char),
       KeyState(Up, Down),
-      SpecialKey(KeyEsc, KeyDown, KeyLeft, KeyRight, KeyUp, KeyBackspace, KeyEnter),
+      SpecialKey(KeyEsc, KeyLeft,KeyEnter),
       Event(EventKey) )
-import Graphics.Gloss.Interface.Environment (getScreenSize)
 
-import System.Random ( getStdRandom, Random(randomR) )
 import System.Exit (exitSuccess)
 import qualified Data.Set as S
 
@@ -38,55 +34,28 @@ input :: Event -> GameState -> IO GameState
 input e gstate@(GameState GetName _ _ _ _ _ _ _) = return $ getName e gstate
 input e gstate = handleExit e $ foldr (\f -> f e) gstate [  handleInput, handleShot,handleButtons]
 
-handleShot :: Event -> GameState -> GameState
-handleShot (EventKey (Char c) Down _ _ ) g@(GameState Playing p1 p2 _ _ _ _ _ ) | c == 'm' && lives p2 > 0 =  g{bullets = newBull p2 : bullets g}
-                                                                                | c == 'f' && lives p1> 0 = g{bullets = newBull p1 : bullets g}
-                                                                                |otherwise = g
-  where newBull p = Bullet (playerPos p) (playerDir p)
-handleShot _ g = g
+-- keeps track of what keys are currently pressed 
+handleInput :: Event -> GameState -> GameState
+handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gstate)}
+handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate)}
+handleInput _ world = world -- Ignore non-keypresses for simplicity
 
-handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
+-- closes the program when pressing esc in main state 
+handleExit :: Event -> GameState -> IO GameState 
 handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = exitSuccess
 handleExit _ gstate = return gstate
 
+-- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
+handleTime :: Float -> GameState -> GameState 
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
+handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
+handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
+handleTime _ gstate = gstate
+
+-- allows the player to enter their name
 getName :: Event -> GameState -> GameState
 getName (EventKey (SpecialKey KeyEnter) _ _ _) g = g{currentState = Choose}
 getName (EventKey (SpecialKey KeyLeft) Down _ _) g | playerName g == "" = g
                                                    | otherwise = g{playerName = take (length (playerName g) - 1) (playerName g) }
 getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}
 getName _ g = g
-
-handleTime :: Float -> GameState -> GameState -- updates time for each player while in playing state if player is alive (when both players are alive their time are the same so the old time for player1 can be reused for player 2)
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) (Player 0 _ _ _) _ _ _ _ _) = gstate{player1 = p1{time = oldTime + elapsedTime}}
-handleTime elapsedTime gstate@(GameState Playing (Player 0 _ _ _) p2@(Player _ _ _ oldTime) _ _ _ _ _) = gstate{player2 = p2{time = oldTime + elapsedTime}}
-handleTime elapsedTime gstate@(GameState Playing p1@(Player _ _ _ oldTime) p2 _ _ _ _ _) =  gstate{player1 = p1{time = oldTime + elapsedTime}, player2 = p2{time = oldTime + elapsedTime} }
-handleTime _ gstate = gstate
-
-
-handleInput :: Event -> GameState -> GameState
-handleInput (EventKey k Down _ _) gstate = gstate { keys = S.insert k (keys gstate)}
-handleInput (EventKey k Up _ _) gstate = gstate { keys = S.delete k (keys gstate)}
-handleInput _ world = world -- Ignore non-keypresses for simplicity
-
-gameTime :: GameState -> Int
-gameTime (GameState Playing (Player 0 _ _ _) (Player _ _ _ time) _ _ _ _ _) = round time
-gameTime (GameState Playing (Player _ _ _ time) _ _ _ _ _ _) = round time
-gameTime _ = 0
-
-spawnAsteroid :: GameState -> IO GameState
-spawnAsteroid gstate@(GameState _ _ _ astr _ _ _ _) = do
-  let time = gameTime gstate
-  newAstr <- newAsteroid
-  if time `mod` 5 == 0 then return $ gstate{asteroids = astr ++ [newAstr] } else return gstate
-
-newAsteroid :: IO Asteroid
-newAsteroid = do
-  (widthX, heightY) <- getScreenSize
-  xPos <- getStdRandom (randomR (0 + ((10 * widthX) `div` 100), widthX `div` 2))
-  yPos <- getStdRandom (randomR (heightY * (-1), heightY `div` 2))
-  xDir <- getStdRandom (randomR (0, widthX))
-  yDir <- getStdRandom (randomR (0, heightY))
-  astrSize <- getStdRandom (randomR (50, 1000))
-  speed <- getStdRandom (randomR (50, 200))
-  return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
-
