@@ -12,6 +12,7 @@ import Model
       Bullet(Bullet, bulletPos, bulletDir),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir , Time, Position)
 import View(playerPath, getScore, bulletPath)
+import Collision(handleBulletCollision, handleCollision, handleCollision')
 
 import qualified Data.Aeson as Ae
 
@@ -31,9 +32,7 @@ import Constants ( pS, aS, baseSize, dS, (<?), MoveDirection (RightDir, LeftDir,
 import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
 import System.Exit (exitSuccess)
-import Graphics.Gloss.Geometry.Line(closestPointOnLine)
-import Graphics.Gloss.Data.Vector (dotV, angleVV, argV)
-import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-))
+
 import qualified Data.ByteString.Lazy as B
 import Movement (moveAsteroids, movePlayer,moveBullets)
 import Data.Aeson.Types (Value(Bool))
@@ -42,7 +41,7 @@ import Data.Aeson.Types (Value(Bool))
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate@(GameState Playing (Player 0 _ _ _) (Player 0 _ _ _) _ _ _ _ _) = insertScore gstate >> return gstate{currentState = GameOver}
-step secs gstate@(GameState Playing _ _ _ _ _ _ _) = log' $ spawnAsteroid $ handleBulletCollision $handleCollision  $ foldr (\f -> f secs) gstate [handleTime,movePlayer,moveAsteroids, moveBullets, handleCollision']  
+step secs gstate@(GameState Playing _ _ _ _ _ _ _) = log' $ spawnAsteroid $ handleBulletCollision $ handleCollision  $ foldr (\f -> f secs) gstate [handleTime,movePlayer,moveAsteroids, moveBullets, handleCollision']  
 step _ gstate = return gstate
 
 log' :: IO GameState -> IO GameState
@@ -144,58 +143,3 @@ newAsteroid = do
   speed <- getStdRandom (randomR (50, 200))
   return $ Asteroid (realToFrac xPos, realToFrac yPos) (realToFrac xDir, realToFrac yDir) (astrSize `div` 100) (speed / 100)
 
---collision stuff
-checkPlayerCollision :: Asteroid -> Player -> Bool
-checkPlayerCollision _ (Player 0 _ _ _) = False
-checkPlayerCollision a@(Asteroid pos@(ax,ay) _ s _) pl =  elem True $ map (checkSegCollision a) (getsegments $ playerPath pl)
-  where getsegments[x,y,z] = [(x,y),(y,z),(x,z)]  -- distibute path into line segments
-        
-        
-
-checkSegCollision :: Asteroid -> (Position,Position) -> Bool
-checkSegCollision (Asteroid pos@(ax,ay) _ s _) seg  =  doesCollide $ getdistance $ getclosest pos seg
-  where getclosest p (x,y) | dotV xy yp > 0 = y    -- get from each line segemnt the closest point to mid asteroid (here x,y aree two points and not coordinates)
-                           | dotV xy xp < 0 = x       --
-                           | otherwise = closestPointOnLine x y p -- used function only looks for the closest point on a infinate line so only used if said closest point of 
-          where xy = x A.- y                                         -- the infinate line is also within segment (which is the case when the needed point isnt either x or y itself)
-                xp = x A.- p
-                yp = y A.- p
-        getdistance (x,y) = sqrt ((x - ax)*(x-ax)+ (y-ay)*(y-ay)) -- get distance between point and mid asteroid
-        doesCollide x = x <= fromIntegral(s* baseSize)
-
-handleBulletCollision gstate = checkCollision (asteroids gstate) (bullets gstate) [] []
-  where 
-    checkCollision:: [Asteroid] -> [Bullet] -> [Asteroid] -> [Bullet] -> GameState
-    checkCollision _ [] _ _ = gstate
-    checkCollision [] (b:bs) aRest bRest = checkCollision aRest bs [] (b:bRest)
-    checkCollision (a:as) (b:bs) aRest bRest | checkSegCollision a (bPoints(bulletPath b)) = gstate{asteroids = as++aRest, bullets = bs ++ bRest,collision = (asteriodPos a,1.0):collision gstate}
-                                             | otherwise = checkCollision as (b:bs) (a:aRest) bRest 
-     where bPoints [x,y] = (x,y) 
-
-handleCollision :: GameState -> GameState
-handleCollision gstate@(GameState _ p1 p2 astrs _ _ _ col) = loseLife (collisionWith astrs [] Nothing)
-  where
-    collisionWith :: [Asteroid] -> [Asteroid] -> Maybe Player -> ([Asteroid], Maybe (Player, Asteroid))
-    collisionWith [] ys may = (ys, Nothing)
-    collisionWith (x:xs) ys may | checkPlayerCollision x p1 = (xs ++ ys, Just (p1, x))
-                                | checkPlayerCollision x p2 = (xs ++ ys, Just (p2, x))
-                                | otherwise = collisionWith xs (x:ys) may
-    loseLife :: ([Asteroid], Maybe (Player, Asteroid)) -> GameState
-    loseLife (as, may) = case may of
-      Nothing -> gstate
-      Just (player, astr@(Asteroid pos _ _ _)) | player == p1 -> gstate{player1 = p1{lives = lives p1 - 1}, asteroids = as, collision = (pos, 1.0) : col}
-                                               | player == p2 -> gstate{player2 = p2{lives = lives p2 - 1}, asteroids = as, collision = (pos, 1.0) : col}
-
--- Calculates the duration of each animation left
-handleCollision' :: Time -> GameState -> GameState
-handleCollision' secs gstate@(GameState _ _ _ _ _ _ _ cols) = gstate{collision = collision'} 
-  where
-    -- First maps the current time over the whole list of currect collisions/animations
-    -- Then it will filters all out which animations are finished, to be on the safeside -2 seconds.
-    collision' :: [(Position, Time)]
-    collision' = filter ff $ map mf cols 
-      where
-        mf :: (Position, Time) -> (Position, Time)
-        mf (pos, time) = (pos, time - secs)
-        ff :: (Position, Time) -> Bool
-        ff (pos, time) = time >= -2
