@@ -73,11 +73,11 @@ data Button = Button {
 
 -- all present mouse buttons 
 bContinueM :: Button
-bContinueM = Button 530 (-700,-150) "Continue" -- button to continue an already started game from the mainmenu
+bContinueM = Button 530 (-265,0) "Continue" -- button to continue an already started game from the mainmenu
 
 bContinueP = Button 530 (-265, 0) "Continue" -- continue from pause menu
 
-bNewGame = Button 750 (50,-150) "New Game" -- start a new game
+bNewGame = Button 750 (-375,-150) "New Game" -- start a new game
 
 bSingle = Button 800 (-400, -200) "Single Player" -- choose single player
 

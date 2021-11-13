@@ -17,6 +17,7 @@ import Model
       Player(Player),
       Bullet(Bullet, bulletPos, bulletDir),
       Button(Button),bContinueM,bContinueP,bCoop,bLeaderG,bLeaderM,bLeaderP,bMainG,bMainL,bMainP,bNewGame,bSingle )
+import Buttons(isPlaying)
 import Constants ( baseSize, (<?), eS ,bHeight)
 import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV, mulSV )
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((+))
@@ -35,7 +36,7 @@ view g = return $ viewPure g
 
 viewPure :: GameState -> Picture
 viewPure gstate = case currentState gstate of -- temp indications for states
-  Main        -> drawMain
+  Main        -> drawMain gstate
   Playing     -> pictures (drawExplosions gstate ++ drawPlaying gstate ++ drawAsteroids gstate)
   GameOver    -> drawGameOver gstate
   Pause       -> drawPause
@@ -104,8 +105,10 @@ drawGameOver gstate@(GameState _ (Player _ _ _ time1) (Player _ _ _ time2) _ _ _
   pictures [color white (translate (-300) 250 $ text "Gameover"), translate (-70) 100 $ color white (text $ show score), drawButton bLeaderG, drawButton bMainG]
    where score = round (time1 + time2)
 
-drawMain :: Picture
-drawMain = pictures[drawButton bContinueM, drawButton bNewGame, drawButton bLeaderM,translate (-300) 230 $ color white (text "Asteroids")]
+drawMain :: GameState -> Picture
+drawMain gstate =  pictures[drawContinue, drawButton bNewGame, drawButton bLeaderM,translate (-300) 230 $ color white (text "Asteroids")]
+  where drawContinue | isPlaying gstate = drawButton bContinueM
+                     | otherwise = blank --when there hasn't started a game yet the continue button will not be visible as it's not usable
 
 drawPause :: Picture
 drawPause = pictures[translate (-200) 250 $ color white (text "Pause"), drawButton bContinueP, drawButton bMainP, drawButton bLeaderP]

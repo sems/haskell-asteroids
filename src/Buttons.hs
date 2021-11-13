@@ -2,9 +2,9 @@ module Buttons where
 
 import Model
     (Button(Button),bContinueM,bContinueP,bCoop,bLeaderG,bLeaderM,bLeaderP,bMainG,bMainL,bMainP,bNewGame,bSingle,
-    GameState(GameState,currentState,player2,playerName), initialState,
+    GameState(GameState,currentState,player1, player2,playerName), initialState,
     State(Main,Choose,Pause,GameOver,Leaderboard,Playing,GetName),
-    Player(lives))
+    Player(lives, time))
 import Constants(bHeight)
 
 import Graphics.Gloss.Interface.IO.Game
@@ -26,10 +26,13 @@ handleButtons _ gstate = gstate
 
 
 fromMain :: Event -> GameState -> GameState
-fromMain e gstate | isClicked e bContinueM = gstate{currentState = Playing}
+fromMain e gstate | isClicked e bContinueM && isPlaying gstate = gstate{currentState = Playing}
                   | isClicked e bNewGame = initialState {currentState = GetName, playerName = ""} 
                   | isClicked e bLeaderM = gstate {currentState = Leaderboard}
                   | otherwise = gstate
+
+isPlaying :: GameState -> Bool --bool whether a game has already started 
+isPlaying gstate = (time $ player1 gstate) > 0
         
 fromChoose :: Event -> GameState -> GameState
 fromChoose e gstate | isClicked e bSingle = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}}
