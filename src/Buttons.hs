@@ -15,7 +15,7 @@ import Graphics.Gloss.Interface.IO.Game
       Event(EventKey))
 
 --for each state check whether one of it's buttons is pressed and update the gamestate accordingly
-handleButtons :: Event -> GameState -> GameState 
+handleButtons :: Event -> GameState -> GameState
 handleButtons e gstate@(GameState Main _ _ _ _ _ _ _) = fromMain e gstate
 handleButtons e gstate@(GameState Choose _ _ _ _ _ _ _) = fromChoose e gstate
 handleButtons e gstate@(GameState Pause _ _ _ _ _ _ _) = fromPause e gstate
@@ -27,20 +27,20 @@ handleButtons _ gstate = gstate
 
 fromMain :: Event -> GameState -> GameState
 fromMain e gstate | isClicked e bContinueM && isPlaying gstate = gstate{currentState = Playing}
-                  | isClicked e bNewGame = initialState {currentState = GetName, playerName = ""} 
+                  | isClicked e bNewGame = initialState {currentState = GetName, playerName = ""}
                   | isClicked e bLeaderM = gstate {currentState = Leaderboard}
                   | otherwise = gstate
 
 isPlaying :: GameState -> Bool --bool whether a game has already started 
-isPlaying gstate = (time $ player1 gstate) > 0
-        
+isPlaying gstate = time (player1 gstate) > 0
+
 fromChoose :: Event -> GameState -> GameState
 fromChoose e gstate | isClicked e bSingle = gstate {currentState = Playing, player2 = (player2 gstate){lives = 0}}
-                    | isClicked e bCoop = gstate {currentState = Playing } 
-                    | otherwise = gstate    
+                    | isClicked e bCoop = gstate {currentState = Playing }
+                    | otherwise = gstate
 
 fromPause :: Event -> GameState -> GameState
-fromPause e gstate | isClicked e bContinueP =  gstate {currentState = Playing} 
+fromPause e gstate | isClicked e bContinueP =  gstate {currentState = Playing}
                    | isClicked e bMainP = gstate{currentState = Main}
                    | isClicked e bLeaderP = gstate{currentState = Leaderboard}
                    | otherwise = gstate
@@ -48,7 +48,7 @@ fromPause e gstate | isClicked e bContinueP =  gstate {currentState = Playing}
 fromGameover :: Event -> GameState -> GameState
 fromGameover e gstate | isClicked e bMainG = initialState
                       | isClicked e bLeaderG = initialState{currentState = Leaderboard}
-                      | otherwise = gstate             
+                      | otherwise = gstate
 
 fromLeader :: Event -> GameState -> GameState
 fromLeader e gstate | isClicked e bMainL = gstate{currentState = Main}
