@@ -75,25 +75,25 @@ data Button = Button {
 bContinueM :: Button
 bContinueM = Button 530 (-700,-150) "Continue" -- button to continue an already started game from the mainmenu
 
-bContinueP = Button 530 (-265, 100) "Continue" -- continue from pause menu
+bContinueP = Button 530 (-265, 0) "Continue" -- continue from pause menu
 
-bNewGame = Button 750 (80,-150) "New Game" -- start a new game
+bNewGame = Button 750 (50,-150) "New Game" -- start a new game
 
-bSingle = Button 800 (-300, -200) "Single Player" -- choose single player
+bSingle = Button 800 (-400, -200) "Single Player" -- choose single player
 
 bCoop = Button 300 (-150, 0) "Coop" -- choose coop
 
-bLeaderM = Button 750 (-300, -300) "Leaderboard" -- go to leaderboard from main menu
+bLeaderM = Button 750 (-375, -300) "Leaderboard" -- go to leaderboard from main menu
 
-bLeaderP = Button 750 (-300,-200) "Leaderboard" -- go to leaderboard from pause
+bLeaderP = Button 750 (-375,-300) "Leaderboard" -- go to leaderboard from pause
 
-bLeaderG = Button 750 (-300,-300) "Leaderboard" -- g to leaderboard from gameover
+bLeaderG = Button 750 (-375,-300) "Leaderboard" -- g to leaderboard from gameover
 
-bMainP = Button 700 (-265,-50) "Main Menu" -- go to main menu from pause
+bMainP = Button 700 (-350,-150) "Main Menu" -- go to main menu from pause
 
-bMainG = Button 700 (-265,-150) "Main Menu" -- go to mainmenu from gameover
+bMainG = Button 700 (-350,-150) "Main Menu" -- go to mainmenu from gameover
 
-bMainL = Button 700 (-265,-350) "Main Menu" -- go to main menu from leaderboard
+bMainL = Button 700 (-350,-350) "Main Menu" -- go to main menu from leaderboard
 
 initialState :: GameState
 initialState = GameState Main (Player 5 (-100 , 0) (1,0) 0) (Player 5 (100,0) (1,0) 0) [] [] S.empty "Nameless" []

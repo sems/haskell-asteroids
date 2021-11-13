@@ -93,8 +93,8 @@ showLeaderboard g f =  drawBoard 300 <$> board (lSort <$> getScore g)
   where lSort = sortBy (\(ScoreEntry _ a) (ScoreEntry _ b) -> compare b a)
         board = fmap (foldl addEntry [title g] ) 
         addEntry list (ScoreEntry n s)  = list ++ ["Name:" ++ n ++ " Score:" ++ show s  ]
-        drawBoard i [] = translate f i $ scale 0.45 0.45 $ color green (text "~~~~~~~~~~~~~~~~~~")
-        drawBoard i (p:ps) = pictures[translate f i (  scale 0.45 0.45 $ color green (text p)) , drawBoard (i-70) ps]
+        drawBoard i [] = translate f i $ scale 0.45 0.45 $ color white (text "~~~~~~~~~~~~~~~~~~")
+        drawBoard i (p:ps) = pictures[translate f i (  scale 0.45 0.45 $ color white (text p)) , drawBoard (i-70) ps]
         title SinglePlayer = "SinglePlayer"
         title Coop = "Coop"
 
@@ -108,15 +108,15 @@ drawMain :: Picture
 drawMain = pictures[drawButton bContinueM, drawButton bNewGame, drawButton bLeaderM,translate (-300) 230 $ color white (text "Asteroids")]
 
 drawPause :: Picture
-drawPause = pictures[translate (-150) 250 $ color white (text "Pause"), drawButton bContinueP, drawButton bMainP, drawButton bLeaderP]
+drawPause = pictures[translate (-200) 250 $ color white (text "Pause"), drawButton bContinueP, drawButton bMainP, drawButton bLeaderP]
 
 drawChoose :: Picture
-drawChoose = pictures[drawButton bSingle, drawButton bCoop, translate (-300) 220 $ color white $ text "Gamemode"]
+drawChoose = pictures[drawButton bSingle, drawButton bCoop, translate (-350) 220 $ color white $ text "Gamemode"]
 
 drawGetName :: GameState -> Picture
-drawGetName gstate = pictures[translate (-200) 0 $ color white $ text $ playerName gstate ,translate (-300) 250 $ color white $ text "Enter Name"]
+drawGetName gstate = pictures[translate (-200) 0 $ color white $ text $ playerName gstate ,translate (-400) 250 $ color white $ text "Enter Name"]
 
--- draw button
+-- draws button as a white box with a text inside of it
 drawButton :: Button -> Picture
 drawButton (Button width (x,y) btext) = translate x y $ color white $ pictures [translate 0 3 $ text btext, line [(0,0),(0,bHeight),(width,bHeight),(width,0),(0,0)]]
 
