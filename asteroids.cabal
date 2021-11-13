@@ -23,4 +23,5 @@ executable asteroids
                      , Movement
                      , Collision
                      , Buttons
+                     , DrawGameObject
   default-language:    Haskell2010

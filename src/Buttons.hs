@@ -1,4 +1,4 @@
-module Buttons where
+module Buttons where -- menu interaction through mouse input (and one Esc button)
 
 import Model
     (Button(Button),bContinueM,bContinueP,bCoop,bLeaderG,bLeaderM,bLeaderP,bMainG,bMainL,bMainP,bNewGame,bSingle,
@@ -14,7 +14,7 @@ import Graphics.Gloss.Interface.IO.Game
       SpecialKey(KeyEsc),
       Event(EventKey))
 
---replacing stateflow, for each state check whether one of it's buttons is pressed and update the gamestate accordingly
+--for each state check whether one of it's buttons is pressed and update the gamestate accordingly
 handleButtons :: Event -> GameState -> GameState 
 handleButtons e gstate@(GameState Main _ _ _ _ _ _ _) = fromMain e gstate
 handleButtons e gstate@(GameState Choose _ _ _ _ _ _ _) = fromChoose e gstate

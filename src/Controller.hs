@@ -11,7 +11,7 @@ import Model
       Player(Player, playerPos, time, lives),
       Bullet(Bullet, bulletPos, bulletDir),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir , Time, Position)
-import View(playerPath, getScore, bulletPath)
+import View(getScore)
 import Collision(handleBulletCollision, handleCollision, handleCollision')
 import Buttons(handleButtons)
 
@@ -42,21 +42,8 @@ import Data.Aeson.Types (Value(Bool))
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate@(GameState Playing (Player 0 _ _ _) (Player 0 _ _ _) _ _ _ _ _) = insertScore gstate >> return gstate{currentState = GameOver}
-step secs gstate@(GameState Playing _ _ _ _ _ _ _) = log' $ spawnAsteroid $ handleBulletCollision $ handleCollision  $ foldr (\f -> f secs) gstate [handleTime,movePlayer,moveAsteroids, moveBullets, handleCollision']  
+step secs gstate@(GameState Playing _ _ _ _ _ _ _) =  spawnAsteroid $ handleBulletCollision $ handleCollision  $ foldr (\f -> f secs) gstate [handleTime,movePlayer,moveAsteroids, moveBullets, handleCollision']  
 step _ gstate = return gstate
-
-log' :: IO GameState -> IO GameState
-log' gstate = do
-  gstate'@(GameState _ p1 p2 _ _ _ _ col) <- gstate
-  -- putStr "x:"
-  -- putStr $ show $ getX p1
-  -- putStr " y:"
-  -- print (getY p1)
-  -- print (argV (-1,-1))
-  gstate
-  where
-    getX p@(Player _ pos dir@(x,y) _) = x
-    getY p@(Player _ pos dir@(x,y) _) = y
 
 -- | Handle user input
 
@@ -93,8 +80,6 @@ getName (EventKey (SpecialKey KeyLeft) Down _ _) g | playerName g == "" = g
                                                    | otherwise = g{playerName = take (length (playerName g) - 1) (playerName g) }
 getName (EventKey (Char c) Down _ _) g = g{playerName = playerName g ++ [c]}
 getName _ g = g
-
-
 
 
 

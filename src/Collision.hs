@@ -1,4 +1,4 @@
-module Collision where
+module Collision where -- all collision related functions 
 
 import Model
   (Asteroid(Asteroid, asteriodPos), 
@@ -7,7 +7,7 @@ import Model
   Bullet(Bullet),
   Time,Position)
 
-import View(bulletPath, playerPath)
+import DrawGameObject(bulletPath, playerPath)
 import Constants(baseSize)
 
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((-)) 
