@@ -3,10 +3,6 @@
 --   the game state into a picture
 module View where
 
-import Graphics.Gloss
-import Graphics.Gloss.Interface.IO.Game
-
-
 import Model
     ( GameMode(..),
       State(GetName, Choose, Pause, GameOver, Playing, Main,
@@ -18,14 +14,10 @@ import Model
 import DrawGameObject(drawPlayers,drawAsteroids,drawExplosions,drawBullets)
 import Buttons(isPlaying)
 import Constants (bHeight)
-import Graphics.Gloss.Geometry.Angle (degToRad)
-import Data.List(sortBy)
-import qualified Data.Aeson as Ae
+import HighscoreInteraction(showLeaderboard)
 
-instance Ae.ToJSON ScoreEntry where
-    toEncoding = Ae.genericToEncoding Ae.defaultOptions
+import Graphics.Gloss.Interface.IO.Game
 
-instance Ae.FromJSON ScoreEntry
 
 view :: GameState -> IO Picture
 view (GameState Leaderboard _ _ _ _ _ _ _) = mconcat [return(drawButton bMainL),showLeaderboard SinglePlayer (-740), showLeaderboard Coop 0]
@@ -69,20 +61,3 @@ drawGetName gstate = pictures[translate (-200) 0 $ color white $ text $ playerNa
 drawButton :: Button -> Picture
 drawButton (Button width (x,y) btext) = translate x y $ color white $ pictures [translate 0 3 $ text btext, line [(0,0),(0,bHeight),(width,bHeight),(width,0),(0,0)]]
 
---
-getScore :: GameMode -> IO [ScoreEntry]
-getScore m = list <$> mlist m
-  where mlist SinglePlayer = Ae.decodeFileStrict "SingleBoard.json"
-        mlist Coop = Ae.decodeFileStrict "CoopBoard.json"
-        list (Just a) = a
-        list Nothing = []
-
-showLeaderboard :: GameMode -> Float -> IO Picture
-showLeaderboard g f =  drawBoard 300 <$> board (getTop <$> getScore g)
-  where getTop =(take 6) .sortBy (\(ScoreEntry _ a) (ScoreEntry _ b) -> compare b a) --after sorting only the top 6 is returned so it'll fit on the screen
-        board = fmap (foldl addEntry [title g] ) 
-        addEntry list (ScoreEntry n s)  = list ++ ["Name:" ++ n ++ " Score:" ++ show s  ]
-        drawBoard i [] = translate f i $ scale 0.45 0.45 $ color white (text "~~~~~~~~~~~~~~~~~~")
-        drawBoard i (p:ps) = pictures[translate f i (  scale 0.45 0.45 $ color white (text p)) , drawBoard (i-70) ps]
-        title SinglePlayer = "SinglePlayer"
-        title Coop = "Coop"

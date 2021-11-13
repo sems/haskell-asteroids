@@ -1,17 +1,20 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Movement where
 
-import Constants ( MoveDirection(..), pS, dS, aS, (<?) )
+import Constants (  pS, dS, aS, (<?) )
 import Model
     ( Asteroid(Asteroid, asteriodPos),
       Player(Player, playerDir, playerPos),
       GameState(player2, player1, keys, asteroids, bullets),
       Direction,
-       Bullet(Bullet, bulletPos, bulletDir))
-import qualified Data.Set as S
+      Bullet(Bullet, bulletPos, bulletDir),
+      MoveDirection(..))
+
 import Graphics.Gloss.Interface.IO.Game (Key (Char, SpecialKey), SpecialKey (KeyDown, KeyLeft, KeyUp, KeyRight))
-import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((*),(+))
+import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((+))
 import Graphics.Gloss.Data.Vector ( mulSV )
+
+import qualified Data.Set as S
 
 moveAsteroids :: Float -> GameState -> GameState
 moveAsteroids secs gstate = gstate { asteroids = asteroids' }

@@ -11,32 +11,21 @@ import Model
       Player(Player, playerPos, time, lives),
       Bullet(Bullet, bulletPos, bulletDir),
       State(GameOver, Leaderboard, Pause, Choose, Main, Playing,GetName), asteriodPos, Direction, playerDir , Time, Position)
-import View(getScore)
 import Collision(handleBulletCollision, handleCollision, handleCollision')
 import Buttons(handleButtons)
+import Movement (moveAsteroids, movePlayer,moveBullets)
+import HighscoreInteraction(insertScore)
 
-import qualified Data.Aeson as Ae
-
-
-import Graphics.Gloss ()
 import Graphics.Gloss.Interface.IO.Game
     ( Key(SpecialKey, Char),
       KeyState(Up, Down),
       SpecialKey(KeyEsc, KeyDown, KeyLeft, KeyRight, KeyUp, KeyBackspace, KeyEnter),
       Event(EventKey) )
-import System.Random ( getStdRandom, Random(randomR) )
-
-import Data.Set ( member )
-import Data.Maybe (fromJust)
-import qualified Data.Set as S
-import Constants ( pS, aS, baseSize, dS, (<?), MoveDirection (RightDir, LeftDir, DownDir) )
-import Text.Printf (printf)
 import Graphics.Gloss.Interface.Environment (getScreenSize)
-import System.Exit (exitSuccess)
 
-import qualified Data.ByteString.Lazy as B
-import Movement (moveAsteroids, movePlayer,moveBullets)
-import Data.Aeson.Types (Value(Bool))
+import System.Random ( getStdRandom, Random(randomR) )
+import System.Exit (exitSuccess)
+import qualified Data.Set as S
 
 
 -- | Handle one iteration of the game
@@ -53,25 +42,17 @@ input e gstate = handleExit e $ foldr (\f -> f e) gstate [  handleInput, handleS
 
 
 handleShot :: Event -> GameState -> GameState
-handleShot (EventKey (Char 'm') Down _ _ ) g@(GameState Playing _ p _ _ _ _ _ ) | lives p == 0 = g
-                                                                                | otherwise =  g{bullets = newBull : bullets g}
-  where newBull = Bullet (playerPos p) (playerDir p)
-handleShot (EventKey (Char 'f') Down _ _ ) g@(GameState Playing p _ _ _ _ _ _ ) | lives p == 0 = g
-                                                                                |otherwise =  g{bullets = newBull : bullets g}
-  where newBull = Bullet (playerPos p) (playerDir p)
-handleShot _ g = g 
+handleShot (EventKey (Char c) Down _ _ ) g@(GameState Playing p1 p2 _ _ _ _ _ ) | c == 'm' && lives p2 > 0 =  g{bullets = newBull p2 : bullets g}
+                                                                                | c == 'f' && lives p1> 0 = g{bullets = newBull p1 : bullets g}
+                                                                                |otherwise = g
+  where newBull p = Bullet (playerPos p) (playerDir p)
+handleShot _ g = g
 
 
 handleExit :: Event -> GameState -> IO GameState --closes the program when pressing esc in main state 
 handleExit  (EventKey (SpecialKey KeyEsc) _ _ _) gstate@(GameState Main _ _ _ _ _ _ _) = exitSuccess
 handleExit _ gstate = return gstate
 
-
-insertScore :: GameState -> IO ()
-insertScore g | time (player2 g) == 0 =   getScore SinglePlayer >>= B.writeFile "SingleBoard.json" . Ae.encode . (entry :)
-              | otherwise = getScore Coop >>= B.writeFile "CoopBoard.json" . Ae.encode  .(entry :)
-  where entry =  ScoreEntry (playerName g) newScore
-        newScore = round ( time (player2 g) + time (player1 g))
 
 
 getName :: Event -> GameState -> GameState

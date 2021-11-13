@@ -24,8 +24,5 @@ baseSize = 5
 (<?) :: Ord a => a -> (a,a) -> Bool
 (<?) x (min, max) = x >= min && x <= max
 
-data MoveDirection = UpDir | DownDir | LeftDir | RightDir
-  deriving Eq
-
 bHeight :: Float
 bHeight = 112; -- Height of a button 

@@ -6,7 +6,6 @@ import Model
   GameState(GameState,player1,player2,asteroids,bullets, collision),
   Bullet(Bullet),
   Time,Position)
-
 import DrawGameObject(bulletPath, playerPath)
 import Constants(baseSize)
 

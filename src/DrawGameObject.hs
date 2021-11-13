@@ -7,7 +7,7 @@ import Model
   Bullet(bulletDir, bulletPos))
 import Constants(baseSize, (<?), eS)
 import Graphics.Gloss.Interface.IO.Game
-import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV, mulSV )
+import Graphics.Gloss.Data.Vector ( rotateV, argV, mulSV )
 
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((+))
 

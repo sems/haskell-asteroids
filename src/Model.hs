@@ -3,8 +3,9 @@
 --   which represent the state of the game
 module Model where
 
-import qualified Data.Set as S
 import Graphics.Gloss.Interface.IO.Interact (Key)
+
+import qualified Data.Set as S
 import GHC.Generics ( Generic )
 
 type Direction = (Float, Float)
@@ -64,6 +65,9 @@ data State = Main
 
 data GameMode = Coop | SinglePlayer
   deriving (Show, Eq)
+
+data MoveDirection = UpDir | DownDir | LeftDir | RightDir
+  deriving Eq
 
 data Button = Button {
   bWidth :: Float ,
