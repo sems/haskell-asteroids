@@ -26,3 +26,6 @@ baseSize = 5
 
 data MoveDirection = UpDir | DownDir | LeftDir | RightDir
   deriving Eq
+
+bHeight :: Float
+bHeight = 112; -- Height of a button 

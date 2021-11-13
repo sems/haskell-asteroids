@@ -4,6 +4,9 @@
 module View where
 
 import Graphics.Gloss
+import Graphics.Gloss.Interface.IO.Game
+
+
 import Model
     ( GameMode(..),
       State(GetName, Choose, Pause, GameOver, Playing, Main,
@@ -12,8 +15,9 @@ import Model
       Asteroid(Asteroid),
       GameState(GameState, collision, playerName, currentState, bullets),
       Player(Player),
-      Bullet(Bullet, bulletPos, bulletDir) )
-import Constants ( baseSize, (<?), eS )
+      Bullet(Bullet, bulletPos, bulletDir),
+      Button(Button),bContinueM,bContinueP,bCoop,bLeaderG,bLeaderM,bLeaderP,bMainG,bMainL,bMainP,bNewGame,bSingle )
+import Constants ( baseSize, (<?), eS ,bHeight)
 import Graphics.Gloss.Data.Vector ( rotateV, angleVV, argV, mulSV )
 import qualified Graphics.Gloss.Data.Point.Arithmetic  as A ((+))
 import Graphics.Gloss.Geometry.Angle (degToRad)
@@ -26,25 +30,18 @@ instance Ae.ToJSON ScoreEntry where
 instance Ae.FromJSON ScoreEntry
 
 view :: GameState -> IO Picture
-view (GameState Leaderboard _ _ _ _ _ _ _) = mconcat [showLeaderboard SinglePlayer (-740), showLeaderboard Coop 0]
+view (GameState Leaderboard _ _ _ _ _ _ _) = mconcat [return(drawButton bMainL),showLeaderboard SinglePlayer (-740), showLeaderboard Coop 0]
 view g = return $ viewPure g
 
 viewPure :: GameState -> Picture
 viewPure gstate = case currentState gstate of -- temp indications for states
-  Main        -> color green (text "Main")
+  Main        -> drawMain
   Playing     -> pictures (drawExplosions gstate ++ drawPlaying gstate ++ drawAsteroids gstate)
-  GameOver    -> pictures $ drawGameOver gstate
-  Pause       -> color green (text "Pause")
-  Leaderboard -> color green (text "Leaderboard")
-  Choose      -> color green (text "choose")
-  GetName     -> color green (text $ playerName gstate)
+  GameOver    -> drawGameOver gstate
+  Pause       -> drawPause
+  Choose      -> drawChoose
+  GetName     -> drawGetName gstate
 
-drawGameOver :: GameState -> [Picture]
-drawGameOver gstate@(GameState _ (Player _ _ _ time1) (Player _ _ _ time2) _ _ _ _ _) =
-  [color green (text "Gameover"), translate 0 (-100) $ color green (text $ show score), translate 0 (-200) $ color green (text $ show mode)]
-   where score = round (time1 + time2)
-         mode  | time2 == 0 = SinglePlayer
-               | otherwise = Coop
 
 drawPlaying :: GameState -> [Picture]
 drawPlaying gstate@(GameState _ p1 p2 _ _ _ _ _)  = drawBullets gstate : drawScore (-490,150) p1 : drawScore (0,150) p2 : drawPlayers gstate
@@ -100,3 +97,26 @@ showLeaderboard g f =  drawBoard 300 <$> board (lSort <$> getScore g)
         drawBoard i (p:ps) = pictures[translate f i (  scale 0.45 0.45 $ color green (text p)) , drawBoard (i-70) ps]
         title SinglePlayer = "SinglePlayer"
         title Coop = "Coop"
+
+
+drawGameOver :: GameState -> Picture
+drawGameOver gstate@(GameState _ (Player _ _ _ time1) (Player _ _ _ time2) _ _ _ _ _) =
+  pictures [color white (translate (-300) 250 $ text "Gameover"), translate (-70) 100 $ color white (text $ show score), drawButton bLeaderG, drawButton bMainG]
+   where score = round (time1 + time2)
+
+drawMain :: Picture
+drawMain = pictures[drawButton bContinueM, drawButton bNewGame, drawButton bLeaderM,translate (-300) 230 $ color white (text "Asteroids")]
+
+drawPause :: Picture
+drawPause = pictures[translate (-150) 250 $ color white (text "Pause"), drawButton bContinueP, drawButton bMainP, drawButton bLeaderP]
+
+drawChoose :: Picture
+drawChoose = pictures[drawButton bSingle, drawButton bCoop, translate (-300) 220 $ color white $ text "Gamemode"]
+
+drawGetName :: GameState -> Picture
+drawGetName gstate = pictures[translate (-200) 0 $ color white $ text $ playerName gstate ,translate (-300) 250 $ color white $ text "Enter Name"]
+
+-- draw button
+drawButton :: Button -> Picture
+drawButton (Button width (x,y) btext) = translate x y $ color white $ pictures [translate 0 3 $ text btext, line [(0,0),(0,bHeight),(width,bHeight),(width,0),(0,0)]]
+

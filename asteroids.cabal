@@ -22,4 +22,5 @@ executable asteroids
                      , Constants
                      , Movement
                      , Collision
+                     , Buttons
   default-language:    Haskell2010
