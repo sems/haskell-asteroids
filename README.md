@@ -1,2 +1,2 @@
 # haskell-asteroids
-To run the application `cabal run asteroids`
+To run the application first `cabal update`, then `cabal run asteroids`.
